@@ -28,7 +28,8 @@ def _p(path: str | Path) -> Path:
 
 def cmd_simulate(args) -> None:
     cfg = load_config(args.config)
-    df = simulate_unit(n_days=args.days, freq=cfg["data"]["resample_freq"], seed=args.seed)
+    df = simulate_unit(n_days=args.days, freq=cfg["data"]["resample_freq"], seed=args.seed,
+                       chem=cfg["chemicals"])
     export = to_dcs_export(df, cfg["_tag_map"])
     out = _p(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)

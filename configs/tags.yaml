@@ -136,7 +136,7 @@ tags:
     dcs_tag: 01FI1040
     equipment: 01-V-001B
     unit: L/h
-    limits: [0, 25]
+    limits: [0, 200]
     source: dcs
     desc: حقن القلوي بعد إزالة الملح — يثبّت الكلورايد كملح غير متحلل
 
@@ -281,7 +281,7 @@ tags:
     dcs_tag: 01FI1311
     equipment: 01-T-001
     unit: L/h
-    limits: [0, 60]
+    limits: [0, 10]
     source: dcs
     desc: الأمين المحايد عند قمة البرج الجوي
 
@@ -289,7 +289,7 @@ tags:
     dcs_tag: 01FI1342
     equipment: 01-V-003
     unit: L/h
-    limits: [0, 60]
+    limits: [0, 10]
     source: dcs
     desc: الأمين المحايد عند قمة حوض الرجوع الساخن
 

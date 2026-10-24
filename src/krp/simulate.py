@@ -10,7 +10,7 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-from .config import TagMap
+from .config import TagMap, load_config
 
 
 def _walk(rng: np.random.Generator, n: int, start: float, vol: float,
@@ -38,8 +38,14 @@ def _campaigns(n: int, fracs: tuple[float, ...], span: int, depth: float) -> np.
     return out
 
 
+def _lph(chem: dict, key: str) -> float:
+    """معدل الحقن التصميمي لمادة واحدة بوحدة L/h (المصدر L/day)."""
+    return chem["design_l_per_day"][key] / 24.0
+
+
 def simulate_unit(n_days: int = 180, freq: str = "1h", seed: int = 42,
-                  start: str = "2025-01-01") -> pd.DataFrame:
+                  start: str = "2025-01-01", chem: dict | None = None) -> pd.DataFrame:
+    chem = chem if chem is not None else load_config()["chemicals"]
     rng = np.random.default_rng(seed)
     steps_per_h = pd.Timedelta(hours=1) / pd.Timedelta(freq)
     n = int(n_days * 24 * steps_per_h)
@@ -69,13 +75,14 @@ def simulate_unit(n_days: int = 180, freq: str = "1h", seed: int = 42,
     fouling = (hours % clean_h) / clean_h
     df["wash_water_rate"] = 0.040 * feed + rng.normal(0, 1.2, n)
     df["wash_water_recycle_rate"] = 0.015 * feed + rng.normal(0, 0.8, n)
-    df["caustic_rate"] = _walk(rng, n, 8, 0.15, 0, 20)
+    df["caustic_rate"] = _walk(rng, n, _lph(chem, "PK-06_caustic"), 1.5, 90, 190)
 
     # ملح الخام الوارد بوحدة PTB (رطل لكل ألف برميل). خام البصرة ثقيل
     # الملوحة، والمدى 60–140 PTB شائع قبل المعالجة.
     salt_in = 60.0 + 80.0 * blend
     remaining = salt_in.copy()
-    for stage, (v0, t0_, demul0) in enumerate(((26.0, 130.0, 6.0), (24.0, 136.0, 5.0)), 1):
+    for stage, (v0, t0_, demul0) in enumerate(((26.0, 130.0, _lph(chem, "PK-04_demulsifier_A")),
+                                    (24.0, 136.0, _lph(chem, "PK-07_demulsifier_B"))), 1):
         volt = _walk(rng, n, v0, 0.3, 12, 32)
         temp = _walk(rng, n, t0_, 0.4, 100, 150)
         demul = _walk(rng, n, demul0, 0.08, 0.5, 20)
@@ -125,10 +132,12 @@ def simulate_unit(n_days: int = 180, freq: str = "1h", seed: int = 42,
     df["accumulator_temp"] = _walk(rng, n, 38, 0.3, 28, 70)
 
     # ---------------- الحقن الكيميائي: ثلاث نقاط ----------------
-    df["corrosion_inhibitor_rate"] = _walk(rng, n, 14, 0.18, 2, 35)
-    df["neutralizer_tower_rate"] = _walk(rng, n, 12, 0.2, 2, 40)
-    df["neutralizer_drum_rate"] = _walk(rng, n, 10, 0.2, 2, 40)
-    df["filmer_rate"] = _walk(rng, n, 9, 0.12, 1, 20)
+    # PK-02 يُقسَّم بين البرج والحوض الساخن؛ التقسيم غير معروف فيُفترض نصفين
+    neut_total = _lph(chem, "PK-02_neutralizing_amine")
+    df["corrosion_inhibitor_rate"] = _walk(rng, n, _lph(chem, "PK-01_corrosion_inhibitor"), 0.05, 1.0, 5.0)
+    df["neutralizer_tower_rate"] = _walk(rng, n, neut_total / 2, 0.03, 0.3, 3.0)
+    df["neutralizer_drum_rate"] = _walk(rng, n, neut_total / 2, 0.03, 0.3, 3.0)
+    df["filmer_rate"] = _walk(rng, n, _lph(chem, "PK-03_filming_amine"), 0.05, 1.0, 5.0)
 
     # ---------------- كيمياء الماء الحامض (01-V-005) ----------------
     # تحوّل الأملاح المتبقية إلى HCl ثم إلى كلورايد في الماء المتكثّف.
@@ -138,7 +147,9 @@ def simulate_unit(n_days: int = 180, freq: str = "1h", seed: int = 42,
     df["cdu_sour_water_h2s"] = np.clip(18 * df["crude_sulfur"] + rng.normal(0, 4, n), 1, 400)
 
     neutralizer = df["neutralizer_tower_rate"] + df["neutralizer_drum_rate"]
-    ph = 6.2 + 0.050 * (neutralizer - 22) - 0.014 * (chloride - 60)
+    # المرجع معدل الحقن التصميمي الفعلي للمحايد (~3.3 L/h)، لا 22 كما في النموذج السابق
+    neut_ref = _lph(chem, "PK-02_neutralizing_amine")
+    ph = 6.2 + 0.25 * (neutralizer - neut_ref) - 0.014 * (chloride - 60)
     df["cdu_sour_water_ph"] = np.clip(ph + rng.normal(0, 0.12, n), 3.2, 9.0)
 
     # ---------------- الـ VDU ----------------
@@ -167,8 +178,8 @@ def simulate_unit(n_days: int = 180, freq: str = "1h", seed: int = 42,
     ph_drive = np.clip(6.0 - df["cdu_sour_water_ph"].to_numpy(), 0, None)
     cl_drive = chloride.to_numpy() / 100.0
     protect = np.clip(
-        0.6 + 0.4 * (df["filmer_rate"].to_numpy() / 12.0)
-        + 0.25 * (df["corrosion_inhibitor_rate"].to_numpy() / 14.0),
+        0.6 + 0.4 * (df["filmer_rate"].to_numpy() / _lph(chem, "PK-03_filming_amine"))
+        + 0.25 * (df["corrosion_inhibitor_rate"].to_numpy() / _lph(chem, "PK-01_corrosion_inhibitor")),
         0.5, 1.8,
     )
     inst = (0.60

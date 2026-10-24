@@ -90,9 +90,9 @@ td,th{padding:8px 12px;border-bottom:1px solid var(--line);text-align:start;whit
 </header>
 <div class="shell">
   <nav class="side">
-    <h2>الوحدة 01</h2>
+    <h2>الوحدة 01 · CDU/VDU</h2>
     <button class="nav-i" data-v="ov" aria-current="true">لوحة المراقبة</button>
-    <button class="nav-i" data-v="calc">حاسبة نقطة الندى</button>
+    <button class="nav-i" data-v="calc">حاسبة الحوض الساخن</button>
     <button class="nav-i" data-v="data">البيانات</button>
     <button class="nav-i" data-v="set">الإعدادات</button>
     <div class="foot">تعمل محلياً في المتصفح — لا تُرفع البيانات</div>
@@ -100,20 +100,20 @@ td,th{padding:8px 12px;border-bottom:1px solid var(--line);text-align:start;whit
   <main class="content">
     <div class="view on" id="v-ov">
       <div class="c-head"><div><h1>لوحة المراقبة</h1><p class="status" id="status">لا توجد بيانات بعد</p></div>
-        <div class="seg" id="range"><button data-d="7">٧ أيام</button><button data-d="30" aria-pressed="true">٣٠ يوماً</button><button data-d="0">الكل</button></div></div>
+        <div class="seg" id="range"><button data-d="7">7 أيام</button><button data-d="30" aria-pressed="true">30 يوماً</button><button data-d="0">الكل</button></div></div>
       <div class="tiles" id="kpis"></div>
       <div class="grid2">
-        <section class="card"><h2>الحديد في ماء القمة</h2><p class="sub">ppm · مع حدّي التنبيه والإنذار</p><div class="legend" id="lg1"></div><canvas id="c1"></canvas></section>
-        <section class="card"><h2>هامش نقطة ندى الماء</h2><p class="sub">°م · تحت العتبة يبدأ التكثّف الحمضي المبكر</p><div class="legend" id="lg2"></div><canvas id="c2"></canvas></section>
+        <section class="card"><h2>الحديد في الماء الحامض للقمة</h2><p class="sub">ppm · من حوض التجميع <span dir="ltr">01-V-005</span> · مع حدّي التنبيه والإنذار</p><div class="legend" id="lg1"></div><canvas id="c1"></canvas></section>
+        <section class="card"><h2>هامش نقطة ندى الماء</h2><p class="sub">°م · نزول هامش الحوض الساخن تحت العتبة يعني تكثّفاً حمضياً فيه</p><div class="legend" id="lg2"></div><canvas id="c2"></canvas></section>
       </div>
     </div>
     <div class="view" id="v-calc">
-      <div class="c-head"><div><h1>حاسبة نقطة الندى</h1><p>جرّب تغيير ظروف التشغيل قبل تطبيقها — بمعادلة أنطوان نفسها المستخدمة في النموذج</p></div></div>
+      <div class="c-head"><div><h1>حاسبة هامش الحوض الساخن</h1><p><span dir="ltr">01-V-003</span> · جرّب تغيير ظروف التشغيل قبل تطبيقها — بمعادلة أنطوان نفسها المستخدمة في النموذج</p></div></div>
       <section class="card"><div class="form">
-        <label>حرارة القمة (°م)<input type="number" id="w_t" value="125"></label>
-        <label>ضغط القمة (barg)<input type="number" id="w_p" value="0.8" step="0.1"></label>
-        <label>بخار التعرية (kg/h)<input type="number" id="w_s" value="9000"></label>
-        <label>بخار القمة الهيدروكربوني (kg/h)<input type="number" id="w_v" value="120000"></label>
+        <label>حرارة الحوض الساخن (°م)<input type="number" id="w_t" value="138"></label>
+        <label>ضغط الحوض الساخن (barg)<input type="number" id="w_p" value="1.18" step="0.05"></label>
+        <label>بخار التعرية (kg/h)<input type="number" id="w_s" value="15000"></label>
+        <label>بخار القمة الهيدروكربوني (kg/h)<input type="number" id="w_v" value="150000"></label>
       </div><div class="result" id="w_out"></div></section>
     </div>
     <div class="view" id="v-data">
@@ -134,7 +134,12 @@ td,th{padding:8px 12px;border-bottom:1px solid var(--line);text-align:start;whit
 </div>
 <script>
 // خريطة وسوم DCS ← الأسماء الموحّدة (مطابقة لـ configs/tags.yaml)
-const TAGS={"01FI1001":"crude_feed_rate","01FI1012":"wash_water_rate","LAB_SALT_PTB":"salt_in_crude_ptb","01FI1210":"stripping_steam_rate","01TI1301":"ovhd_temp","01PI1302":"ovhd_pressure","01FI1304":"ovhd_vapor_rate","01FI1320":"neutralizer_rate","LAB_OVHD_PH":"ovhd_water_ph","LAB_OVHD_CL":"ovhd_water_chloride","LAB_OVHD_FE":"ovhd_water_iron"};
+// خريطة وسوم DCS ← الأسماء الموحّدة (مطابقة لـ configs/tags.yaml — تصميم وحدة 01 من الـ PFD)
+const TAGS={"01FI1001":"crude_feed_rate","01FI1030":"wash_water_rate","01FI1031":"wash_water_recycle_rate","LAB_SALT_PTB":"salt_in_crude_ptb",
+ "01FI1210":"stripping_steam_rate","01TI1301":"atm_ovhd_temp","01PI1302":"atm_ovhd_pressure","01FI1304":"atm_ovhd_vapor_rate",
+ "01TI1340":"hot_drum_temp","01PI1341":"hot_drum_pressure","01TI1360":"accumulator_temp",
+ "01FI1311":"neutralizer_tower_rate","01FI1342":"neutralizer_drum_rate","01FI1343":"filmer_rate","01FI1310":"corrosion_inhibitor_rate",
+ "LAB_CDU_SW_PH":"cdu_sour_water_ph","LAB_CDU_SW_CL":"cdu_sour_water_chloride","LAB_CDU_SW_FE":"cdu_sour_water_iron"};
 const $=id=>document.getElementById(id);
 const cfg=()=>({warn:+$('s_warn').value,crit:+$('s_crit').value,margin:+$('s_margin').value,phlo:+$('s_phlo').value});
 let rows=[],preds=null,days=30;
@@ -147,11 +152,14 @@ function dewpoint(steam,vap,pbarg){
   if(!(p>0))return NaN;
   return p<=760?1730.63/(8.07131-Math.log10(p))-233.426:1810.94/(8.14019-Math.log10(p))-244.485;
 }
+// المؤشر الحرج: هامش الحوض الساخن <span dir="ltr">01-V-003</span> فوق نقطة ندى الماء عند ضغطه
 function enrich(r){
-  r.dew=dewpoint(r.stripping_steam_rate,r.ovhd_vapor_rate,r.ovhd_pressure);
-  r.margin=r.ovhd_temp-r.dew;
+  r.dew=dewpoint(r.stripping_steam_rate,r.atm_ovhd_vapor_rate,r.hot_drum_pressure);
+  r.margin=r.hot_drum_temp-r.dew;
+  r.ovhd_margin=r.atm_ovhd_temp-dewpoint(r.stripping_steam_rate,r.atm_ovhd_vapor_rate,r.atm_ovhd_pressure);
   r.cl_load=r.salt_in_crude_ptb*r.crude_feed_rate/1000;
-  r.wash_pct=100*r.wash_water_rate/r.crude_feed_rate;
+  r.wash_pct=100*(r.wash_water_rate+(isFinite(r.wash_water_recycle_rate)?r.wash_water_recycle_rate:0))/r.crude_feed_rate;
+  r.neut=(r.neutralizer_tower_rate||0)+(r.neutralizer_drum_rate||0);
   return r;
 }
 function level(fe){const c=cfg();return !isFinite(fe)?['—','mut']:fe>=c.crit?['حرج','crit']:fe>=c.warn?['تنبيه','warn']:['طبيعي','ok']}
@@ -164,12 +172,16 @@ function parseCSV(t){
 function ffill(rs){const last={},age={};for(const r of rs)for(const k in r){if(typeof r[k]!=='number')continue;if(isFinite(r[k])){last[k]=r[k];age[k]=0}else if(k in last&&++age[k]<=24)r[k]=last[k]}return rs}
 
 function demo(){
-  const n=24*90,t0=Date.now()-n*3600e3;let salt=2,st=9000,out=[],fe=1.5;
+  const n=24*90,t0=Date.now()-n*3600e3;let salt=2,st=15000,out=[],fe=1.5;
   for(let i=0;i<n;i++){
     salt=Math.max(.5,salt+(Math.random()-.5)*.15+(i>n*.6&&i<n*.75?.01:0));
-    st=Math.min(14000,Math.max(6000,st+(Math.random()-.5)*150));
-    const r=enrich({timestamp:new Date(t0+i*3600e3).toISOString().slice(0,16).replace('T',' '),crude_feed_rate:850+Math.random()*40,wash_water_rate:45+Math.random()*5,salt_in_crude_ptb:salt,stripping_steam_rate:st,ovhd_temp:123+Math.sin(i/200)*4+Math.random(),ovhd_pressure:.8,ovhd_vapor_rate:120000,neutralizer_rate:30,ovhd_water_ph:6.2-salt*.15});
-    fe+=.05*((.8+.6*salt+Math.max(0,16-r.margin)*.4)-fe)+(Math.random()-.5)*.1;r.ovhd_water_iron=fe;out.push(r);
+    st=Math.min(18000,Math.max(12000,st+(Math.random()-.5)*150));
+    // قيم التصميم: قمة البرج 172°م و1.47 barg، الحوض الساخن 138°م و1.18 barg؛ نوبة تبريد زائد للحوض في الربع الأخير
+    const dip=i>n*.78&&i<n*.9?28*Math.sin(Math.PI*(i-n*.78)/(n*.12)):0;
+    const r=enrich({timestamp:new Date(t0+i*3600e3).toISOString().slice(0,16).replace('T',' '),crude_feed_rate:850+Math.random()*40,wash_water_rate:40+Math.random()*5,wash_water_recycle_rate:8,salt_in_crude_ptb:salt,stripping_steam_rate:st,
+      atm_ovhd_temp:172+Math.sin(i/200)*3+Math.random(),atm_ovhd_pressure:1.47,atm_ovhd_vapor_rate:150000,hot_drum_temp:138+Math.sin(i/150)*3+Math.random()-dip,hot_drum_pressure:1.18,
+      neutralizer_tower_rate:18,neutralizer_drum_rate:12,filmer_rate:6,cdu_sour_water_ph:6.2-salt*.15});
+    fe+=.05*((.8+.6*salt+Math.max(0,30-r.margin)*.25)-fe)+(Math.random()-.5)*.1;r.cdu_sour_water_iron=fe;out.push(r);
   }
   load(out,'بيانات تجريبية اصطناعية — ليست وحدة حقيقية');
 }
@@ -192,21 +204,21 @@ const lg=(id,items)=>$(id).innerHTML=items.map(([t,c])=>`<span><i style="backgro
 
 function render(){
   if(!rows.length)return;const c=cfg(),f=v=>isFinite(v)?(+v).toFixed(2):'—';
-  const last=[...rows].reverse().find(r=>isFinite(r.ovhd_water_iron)||isFinite(r.predicted))||rows.at(-1);
-  const fe=last.ovhd_water_iron??last.actual,pr=last.predicted,[lv,lc]=level(isFinite(pr)?pr:fe);
+  const last=[...rows].reverse().find(r=>isFinite(r.cdu_sour_water_iron)||isFinite(r.predicted))||rows.at(-1);
+  const fe=last.cdu_sour_water_iron??last.actual,pr=last.predicted,[lv,lc]=level(isFinite(pr)?pr:fe);
   const mc=last.margin<c.margin?'crit':'ok';
   $('kpis').innerHTML=[
     ['مستوى الإنذار',lv,lc],['الحديد الحالي ppm',f(fe),level(fe)[1]],
     ...(isFinite(pr)?[['المتوقع بعد الأفق ppm',f(pr),level(pr)[1]]]:[]),
-    ['هامش نقطة الندى °م',f(last.margin),isFinite(last.margin)?mc:''],
-    ['نقطة ندى الماء °م',f(last.dew),''],['حِمل الكلورايد',f(last.cl_load),''],
-    ['ماء الغسيل %',f(last.wash_pct),''],['pH ماء القمة',f(last.ovhd_water_ph),last.ovhd_water_ph<c.phlo?'warn':'']
+    ['هامش الحوض الساخن <span dir="ltr">01-V-003</span> °م',f(last.margin),isFinite(last.margin)?mc:''],
+    ['نقطة الندى في الحوض °م',f(last.dew),''],['هامش قمة البرج °م',f(last.ovhd_margin),''],['حِمل الكلورايد',f(last.cl_load),''],
+    ['ماء الغسيل مع المُعاد %',f(last.wash_pct),''],['المحايد الكلي L/h',f(last.neut),''],['pH الماء الحامض',f(last.cdu_sour_water_ph),last.cdu_sour_water_ph<c.phlo?'warn':'']
   ].map(([l,v,k],i)=>`<div class="tile ${k} ${i?'':'hero'}"><div class="v">${v}</div><div class="l">${l}</div></div>`).join('');
   const thr=[{v:c.warn,c:'--warn'},{v:c.crit,c:'--crit'}];
   if(preds){draw($('c1'),[{data:view().map(r=>r.actual),c:'--s1'},{data:view().map(r=>r.predicted),c:'--s2'}],thr);lg('lg1',[['الفعلي','--s1'],['المتوقع','--s2'],['تنبيه','--warn'],['حرج','--crit']])}
-  else{draw($('c1'),[{data:view().map(r=>r.ovhd_water_iron),c:'--s1'}],thr);lg('lg1',[['الحديد','--s1'],['تنبيه','--warn'],['حرج','--crit']])}
-  draw($('c2'),[{data:view().map(r=>r.margin),c:'--s1'}],[{v:c.margin,c:'--crit'}]);lg('lg2',[['الهامش','--s1'],['عتبة التكثّف المبكر','--crit']]);
-  const cols=preds?[['timestamp','الزمن'],['actual','الفعلي'],['predicted','المتوقع'],['alarm','الإنذار']]:[['timestamp','الزمن'],['ovhd_water_iron','Fe'],['margin','الهامش'],['ovhd_temp','حرارة القمة'],['ovhd_water_ph','pH'],['cl_load','حِمل Cl']];
+  else{draw($('c1'),[{data:view().map(r=>r.cdu_sour_water_iron),c:'--s1'}],thr);lg('lg1',[['الحديد','--s1'],['تنبيه','--warn'],['حرج','--crit']])}
+  draw($('c2'),[{data:view().map(r=>r.margin),c:'--s1'},{data:view().map(r=>r.ovhd_margin),c:'--s2'}],[{v:c.margin,c:'--crit'}]);lg('lg2',[['هامش الحوض الساخن','--s1'],['هامش قمة البرج','--s2'],['عتبة التكثّف','--crit']]);
+  const cols=preds?[['timestamp','الزمن'],['actual','الفعلي'],['predicted','المتوقع'],['alarm','الإنذار']]:[['timestamp','الزمن'],['cdu_sour_water_iron','Fe'],['margin','هامش الحوض'],['hot_drum_temp','حرارة الحوض'],['ovhd_margin','هامش القمة'],['cdu_sour_water_ph','pH'],['cl_load','حِمل Cl']];
   $('tbl').innerHTML='<table><tr>'+cols.map(c=>`<th>${c[1]}</th>`).join('')+'</tr>'+rows.slice(-200).reverse().map(r=>'<tr>'+cols.map(([k])=>`<td>${k==='alarm'&&r[k]?`<span class="badge ${{'طبيعي':'ok','تنبيه':'warn','حرج':'crit'}[r[k]]||''}">${r[k]}</span>`:typeof r[k]==='number'?f(r[k]):(r[k]??'—')}</td>`).join('')+'</tr>').join('')+'</table>';
 }
 function whatif(){

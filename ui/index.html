@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>لوحة K.R.P</title>
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--fg:#1c2430;--mut:#667085;--line:#e3e6eb;--acc:#2563eb;--ok:#15803d;--warn:#b45309;--crit:#b91c1c;--s1:#2563eb;--s2:#d97706}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1419;--card:#171d24;--fg:#e6e9ee;--mut:#98a2b3;--line:#2a323c;--acc:#60a5fa;--ok:#4ade80;--warn:#fbbf24;--crit:#f87171;--s1:#60a5fa;--s2:#fbbf24}}
+:root[data-theme="dark"]{--bg:#0f1419;--card:#171d24;--fg:#e6e9ee;--mut:#98a2b3;--line:#2a323c;--acc:#60a5fa;--ok:#4ade80;--warn:#fbbf24;--crit:#f87171;--s1:#60a5fa;--s2:#fbbf24}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.6 system-ui,"Segoe UI",Tahoma,sans-serif}
+header{padding:16px;border-bottom:1px solid var(--line);background:var(--card);display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+h1{font-size:19px;margin:0}h2{font-size:16px;margin:0 0 10px}
+main{max-width:1200px;margin:auto;padding:16px;display:grid;gap:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+button,label.btn{background:var(--acc);color:#fff;border:0;border-radius:8px;padding:8px 14px;cursor:pointer;font:inherit}
+button.ghost{background:transparent;color:var(--fg);border:1px solid var(--line)}
+input[type=file]{display:none}
+input[type=number]{width:100%;padding:6px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--fg);font:inherit}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+.kpi{border:1px solid var(--line);border-radius:10px;padding:12px}
+.kpi .v{font-size:24px;font-weight:700;font-variant-numeric:tabular-nums}
+.kpi .l{color:var(--mut);font-size:13px}
+.ok{color:var(--ok)}.warn{color:var(--warn)}.crit{color:var(--crit)}
+canvas{width:100%;height:260px;display:block}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px}
+.mut{color:var(--mut);font-size:13px}
+table{width:100%;border-collapse:collapse;font-size:13px}td,th{padding:6px;border-bottom:1px solid var(--line);text-align:right}
+.tbl{max-height:320px;overflow:auto}
+.legend span{display:inline-flex;align-items:center;gap:4px;margin-inline-end:12px;font-size:13px}
+.legend i{width:12px;height:3px;display:inline-block}
+.form{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+</style>
+</head>
+<body>
+<header>
+  <div><h1>K.R.P — مراقبة تآكل قمة البرج الجوي</h1><div class="mut">واجهة مستقلة تعمل في المتصفح مباشرة — لا تحتاج تشغيل بايثون</div></div>
+  <div class="row">
+    <label class="btn">📂 تحميل ملف CSV<input type="file" id="file" accept=".csv,.json"></label>
+    <button class="ghost" id="demo">بيانات تجريبية</button>
+    <button class="ghost" id="theme">🌓</button>
+  </div>
+</header>
+<main>
+  <section class="card" id="status"><span class="mut">حمّل تصدير DCS (بوسوم <code>tags.yaml</code> أو بالأسماء الموحّدة)، أو <code>predictions.csv</code> / <code>summary.json</code> من مجلد outputs، أو اضغط «بيانات تجريبية».</span></section>
+
+  <section class="card"><h2>المؤشرات الحالية</h2><div class="kpis" id="kpis"></div></section>
+
+  <div class="grid2">
+    <section class="card"><h2>الحديد في ماء القمة (ppm)</h2><div class="legend" id="lg1"></div><canvas id="c1"></canvas></section>
+    <section class="card"><h2>هامش نقطة ندى الماء (°م)</h2><div class="legend" id="lg2"></div><canvas id="c2"></canvas></section>
+  </div>
+
+  <section class="card">
+    <h2>حاسبة نقطة الندى (ماذا لو؟)</h2>
+    <div class="form">
+      <label>حرارة القمة °م<input type="number" id="w_t" value="125"></label>
+      <label>ضغط القمة barg<input type="number" id="w_p" value="0.8" step="0.1"></label>
+      <label>بخار التعرية kg/h<input type="number" id="w_s" value="9000"></label>
+      <label>بخار القمة HC kg/h<input type="number" id="w_v" value="120000"></label>
+    </div>
+    <p id="w_out" style="font-size:17px"></p>
+  </section>
+
+  <section class="card"><h2>آخر القراءات</h2><div class="tbl" id="tbl"></div></section>
+
+  <section class="card"><h2>الإعدادات</h2>
+    <div class="form">
+      <label>حد التنبيه Fe ppm<input type="number" id="s_warn" value="3" step="0.1"></label>
+      <label>حد الإنذار Fe ppm<input type="number" id="s_crit" value="5" step="0.1"></label>
+      <label>عتبة هامش الندى °م<input type="number" id="s_margin" value="14"></label>
+      <label>نطاق pH الأدنى<input type="number" id="s_phlo" value="5.5" step="0.1"></label>
+    </div>
+    <p class="mut">القيم الافتراضية مطابقة لـ configs/config.yaml.</p>
+  </section>
+</main>
+<script>
+// خريطة وسوم DCS ← الأسماء الموحّدة (مطابقة لـ configs/tags.yaml)
+const TAGS={"01FI1001":"crude_feed_rate","01FI1012":"wash_water_rate","LAB_SALT_PTB":"salt_in_crude_ptb","01FI1210":"stripping_steam_rate","01TI1301":"ovhd_temp","01PI1302":"ovhd_pressure","01FI1304":"ovhd_vapor_rate","01FI1320":"neutralizer_rate","LAB_OVHD_PH":"ovhd_water_ph","LAB_OVHD_CL":"ovhd_water_chloride","LAB_OVHD_FE":"ovhd_water_iron"};
+const $=id=>document.getElementById(id);
+const cfg=()=>({warn:+$('s_warn').value,crit:+$('s_crit').value,margin:+$('s_margin').value,phlo:+$('s_phlo').value});
+let rows=[],preds=null;
+
+// نفس معادلات src/krp/features.py
+function dewpoint(steam,vap,pbarg){
+  const nw=steam/18.015,nh=vap/100,y=nw/(nw+nh);
+  const p=(pbarg+1.01325)*750.062*y;
+  if(!(p>0))return NaN;
+  return p<=760?1730.63/(8.07131-Math.log10(p))-233.426:1810.94/(8.14019-Math.log10(p))-244.485;
+}
+function enrich(r){
+  r.dew=dewpoint(r.stripping_steam_rate,r.ovhd_vapor_rate,r.ovhd_pressure);
+  r.margin=r.ovhd_temp-r.dew;
+  r.cl_load=r.salt_in_crude_ptb*r.crude_feed_rate/1000;
+  r.wash_pct=100*r.wash_water_rate/r.crude_feed_rate;
+  return r;
+}
+function level(fe){const c=cfg();return !isFinite(fe)?['—','mut']:fe>=c.crit?['حرج','crit']:fe>=c.warn?['تنبيه','warn']:['طبيعي','ok']}
+
+function parseCSV(t){
+  const L=t.trim().split(/\r?\n/),H=L[0].split(',').map(h=>h.trim().replace(/^"|"$/g,''));
+  return L.slice(1).map(l=>{const v=l.split(','),o={};H.forEach((h,i)=>{const k=TAGS[h]||h,x=(v[i]||'').trim();o[k]=(k==='timestamp'||k===''||k==='alarm')?x:(x===''?NaN:+x)});o.timestamp=o.timestamp||o['']||o.time;return o});
+}
+// السحب الأمامي لقراءات المختبر (حتى 24 قراءة)
+function ffill(rs){const last={},age={};for(const r of rs)for(const k in r){if(typeof r[k]!=='number')continue;if(isFinite(r[k])){last[k]=r[k];age[k]=0}else if(k in last&&++age[k]<=24)r[k]=last[k]}return rs}
+
+function demo(){
+  const n=24*90,t0=Date.now()-n*3600e3;let salt=2,st=9000,out=[],fe=1.5;
+  for(let i=0;i<n;i++){
+    salt=Math.max(.5,salt+(Math.random()-.5)*.15+(i>n*.6&&i<n*.75?.01:0));
+    st=Math.min(14000,Math.max(6000,st+(Math.random()-.5)*150));
+    const r=enrich({timestamp:new Date(t0+i*3600e3).toISOString().slice(0,16).replace('T',' '),crude_feed_rate:850+Math.random()*40,wash_water_rate:45+Math.random()*5,salt_in_crude_ptb:salt,stripping_steam_rate:st,ovhd_temp:123+Math.sin(i/200)*4+Math.random(),ovhd_pressure:.8,ovhd_vapor_rate:120000,neutralizer_rate:30,ovhd_water_ph:6.2-salt*.15});
+    fe+=.05*((.8+.6*salt+Math.max(0,16-r.margin)*.4)-fe)+(Math.random()-.5)*.1;r.ovhd_water_iron=fe;out.push(r);
+  }
+  load(out,'بيانات تجريبية اصطناعية — ليست وحدة حقيقية');
+}
+function load(rs,src){rows=rs;preds=null;$('status').innerHTML=`<b>${src}</b> · ${rs.length} صف`;render()}
+
+function draw(cv,series,thr){
+  const d=devicePixelRatio||1,W=cv.clientWidth,H=cv.clientHeight;cv.width=W*d;cv.height=H*d;
+  const x=cv.getContext('2d');x.scale(d,d);x.clearRect(0,0,W,H);
+  const cs=getComputedStyle(document.documentElement),col=v=>cs.getPropertyValue(v).trim();
+  const all=series.flatMap(s=>s.data).filter(isFinite).concat(thr.map(t=>t.v));if(!all.length)return;
+  let lo=Math.min(...all),hi=Math.max(...all);if(hi===lo)hi=lo+1;const p=36,n=Math.max(...series.map(s=>s.data.length));
+  const Y=v=>H-20-(H-30)*(v-lo)/(hi-lo);
+  const Xr=i=>p+(W-p-8)*i/(n-1||1);
+  x.direction='ltr';x.textAlign='left';x.font='11px system-ui';x.fillStyle=col('--mut');x.strokeStyle=col('--line');
+  for(let k=0;k<=4;k++){const v=lo+(hi-lo)*k/4,y=Y(v);x.beginPath();x.moveTo(p,y);x.lineTo(W,y);x.stroke();x.fillText(v.toFixed(1),2,y+4)}
+  thr.forEach(t=>{x.strokeStyle=col(t.c);x.setLineDash([5,4]);x.beginPath();x.moveTo(p,Y(t.v));x.lineTo(W,Y(t.v));x.stroke();x.setLineDash([])});
+  series.forEach(s=>{x.strokeStyle=col(s.c);x.lineWidth=1.6;x.beginPath();let m=false;s.data.forEach((v,i)=>{if(!isFinite(v)){m=false;return}m?x.lineTo(Xr(i),Y(v)):x.moveTo(Xr(i),Y(v));m=true});x.stroke();x.lineWidth=1});
+}
+const lg=(id,items)=>$(id).innerHTML=items.map(([t,c])=>`<span><i style="background:var(${c})"></i>${t}</span>`).join('');
+
+function render(){
+  if(!rows.length)return;const c=cfg(),f=v=>isFinite(v)?(+v).toFixed(2):'—';
+  const last=[...rows].reverse().find(r=>isFinite(r.ovhd_water_iron)||isFinite(r.predicted))||rows.at(-1);
+  const fe=last.ovhd_water_iron??last.actual,pr=last.predicted,[lv,lc]=level(isFinite(pr)?pr:fe);
+  const mc=last.margin<c.margin?'crit':'ok';
+  $('kpis').innerHTML=[
+    ['مستوى الإنذار',lv,lc],['الحديد الحالي ppm',f(fe),level(fe)[1]],
+    ...(isFinite(pr)?[['المتوقع بعد الأفق ppm',f(pr),level(pr)[1]]]:[]),
+    ['هامش نقطة الندى °م',f(last.margin),isFinite(last.margin)?mc:''],
+    ['نقطة ندى الماء °م',f(last.dew),''],['حِمل الكلورايد',f(last.cl_load),''],
+    ['ماء الغسيل %',f(last.wash_pct),''],['pH ماء القمة',f(last.ovhd_water_ph),last.ovhd_water_ph<c.phlo?'warn':'']
+  ].map(([l,v,k])=>`<div class="kpi"><div class="l">${l}</div><div class="v ${k}">${v}</div></div>`).join('');
+  const thr=[{v:c.warn,c:'--warn'},{v:c.crit,c:'--crit'}];
+  if(preds){draw($('c1'),[{data:rows.map(r=>r.actual),c:'--s1'},{data:rows.map(r=>r.predicted),c:'--s2'}],thr);lg('lg1',[['الفعلي','--s1'],['المتوقع','--s2'],['تنبيه','--warn'],['حرج','--crit']])}
+  else{draw($('c1'),[{data:rows.map(r=>r.ovhd_water_iron),c:'--s1'}],thr);lg('lg1',[['الحديد','--s1'],['تنبيه','--warn'],['حرج','--crit']])}
+  draw($('c2'),[{data:rows.map(r=>r.margin),c:'--s1'}],[{v:c.margin,c:'--crit'}]);lg('lg2',[['الهامش','--s1'],['عتبة التكثّف المبكر','--crit']]);
+  const cols=preds?[['timestamp','الزمن'],['actual','الفعلي'],['predicted','المتوقع'],['alarm','الإنذار']]:[['timestamp','الزمن'],['ovhd_water_iron','Fe'],['margin','الهامش'],['ovhd_temp','حرارة القمة'],['ovhd_water_ph','pH'],['cl_load','حِمل Cl']];
+  $('tbl').innerHTML='<table><tr>'+cols.map(c=>`<th>${c[1]}</th>`).join('')+'</tr>'+rows.slice(-50).reverse().map(r=>'<tr>'+cols.map(([k])=>`<td>${typeof r[k]==='number'?f(r[k]):(r[k]??'—')}</td>`).join('')+'</tr>').join('')+'</table>';
+}
+function whatif(){
+  const d=dewpoint(+$('w_s').value,+$('w_v').value,+$('w_p').value),m=+$('w_t').value-d,ok=m>=cfg().margin;
+  $('w_out').innerHTML=`نقطة الندى: <b>${d.toFixed(1)}°م</b> · الهامش: <b class="${ok?'ok':'crit'}">${m.toFixed(1)}°م</b> — ${ok?'آمن':'خطر تكثّف حمضي مبكر'}`;
+}
+$('file').onchange=e=>{const fl=e.target.files[0];if(!fl)return;fl.text().then(t=>{
+  if(fl.name.endsWith('.json')){const s=JSON.parse(t);$('status').innerHTML=`<b>summary.json</b> · أفضل نموذج: ${s.best_model} · MAE: ${(+s.metrics?.MAE||+s.metrics?.mae||0).toFixed?.(3)} · الأفق: ${s.horizon_h} ساعة · أهم الخصائص: ${Object.keys(s.top_features||{}).slice(0,5).join('، ')}`;return}
+  const r=parseCSV(t);
+  if('predicted' in r[0]){rows=r;preds=true;$('status').innerHTML=`<b>${fl.name}</b> · تنبؤات النموذج · ${r.length} صف`;render()}
+  else load(ffill(r).map(enrich),fl.name);
+})};
+$('demo').onclick=demo;
+$('theme').onclick=()=>{const h=document.documentElement,dk=h.dataset.theme?h.dataset.theme==='dark':matchMedia('(prefers-color-scheme:dark)').matches;h.dataset.theme=dk?'light':'dark';render()};
+document.querySelectorAll('input[type=number]').forEach(i=>i.oninput=()=>{whatif();render()});
+addEventListener('resize',render);whatif();demo();
+</script>
+</body>
+</html>

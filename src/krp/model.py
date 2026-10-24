@@ -16,7 +16,6 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.impute import SimpleImputer
 from sklearn.linear_model import Ridge
 from sklearn.metrics import mean_absolute_error, r2_score
-from sklearn.inspection import permutation_importance
 from sklearn.model_selection import TimeSeriesSplit
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
@@ -137,18 +136,43 @@ def model_internal_importances(model: Pipeline, feature_names: list[str]) -> pd.
 
 
 def extract_importances(model: Pipeline, X_test: pd.DataFrame, y_test: pd.Series,
-                        seed: int = 42, n_repeats: int = 5) -> pd.Series:
+                        seed: int = 42, n_repeats: int = 5,
+                        max_features: int | None = 60) -> pd.Series:
     """أهمية التبديل على فترة الاختبار — المقياس الأمين للتفسير.
 
     تُخلط قيم كل خاصية عشوائياً ويُقاس مقدار تدهور الخطأ الفعلي. ما يرفع
     الخطأ حقاً هو المهم؛ والخاصية التي لا يضرّ خلطُها ليست منبئة مهما
     كثُر استخدامها في الانقسامات. هذا ما يُعرض على مهندس التشغيل.
+
+    التكلفة خطية في عدد الخصائص: كل خاصية تتطلب `n_repeats` تنبؤاً كاملاً،
+    فستّمئة خاصية تعني نحو ثلاثة آلاف تنبؤ. لذلك تُرشَّح أولاً بالأهمية
+    الداخلية للنموذج — وهي مخزّنة مسبقاً فتكلفتها صفر — ويُبدَّل أعلى
+    `max_features` منها فقط. الترشيح متساهل عمداً: الأهمية الداخلية متحيّزة
+    لكنها نادراً ما تُنزل خاصيةً منبئة فعلاً إلى ما دون المرتبة الستين.
+    مرّر `max_features=None` لتبديل كل الخصائص بلا ترشيح.
     """
-    result = permutation_importance(
-        model, X_test, y_test, n_repeats=n_repeats,
-        random_state=seed, scoring="neg_mean_absolute_error", n_jobs=-1,
-    )
-    s = pd.Series(result.importances_mean, index=list(X_test.columns))
+    columns = list(X_test.columns)
+    candidates = columns
+    if max_features is not None and len(columns) > max_features:
+        internal = model_internal_importances(model, columns)
+        if not internal.empty:
+            candidates = list(internal.head(max_features).index)
+
+    base = mean_absolute_error(y_test, model.predict(X_test))
+    rng = np.random.default_rng(seed)
+    scores: dict[str, float] = {}
+
+    for col in candidates:
+        permuted = X_test.copy()
+        original = permuted[col].to_numpy()
+        drops = []
+        for _ in range(n_repeats):
+            permuted[col] = rng.permutation(original)
+            drops.append(mean_absolute_error(y_test, model.predict(permuted)) - base)
+        permuted[col] = original
+        scores[col] = float(np.mean(drops))
+
+    s = pd.Series(scores).reindex(columns).fillna(0.0)
     s = s.clip(lower=0)  # قيمة سالبة تعني "لا أثر"، فتُثبّت عند الصفر
     total = s.sum()
     return (s / total if total > 0 else s).sort_values(ascending=False)
@@ -187,7 +211,11 @@ def train(X: pd.DataFrame, y: pd.Series, cfg: dict) -> TrainResult:
         best_name=best.name,
         best_model=best_model,
         evaluations=evaluations,
-        importances=extract_importances(best_model, X_te, y_te, seed=mcfg["seed"]),
+        importances=extract_importances(
+            best_model, X_te, y_te, seed=mcfg["seed"],
+            n_repeats=mcfg.get("importance_n_repeats", 5),
+            max_features=mcfg.get("importance_max_features", 60),
+        ),
         predictions=preds,
         drift=drift_report(y_tr, y_te),
         feature_names=list(X.columns),

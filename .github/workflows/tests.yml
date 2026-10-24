@@ -44,7 +44,7 @@ jobs:
         run: |
           set -e
           for f in summary.json predictions.csv model_leaderboard.csv \
-                   prediction_timeline.png feature_importance.png dewpoint_risk.png; do
+                   prediction_timeline.png feature_importance.png hot_drum_risk.png chloride_risk.png; do
             test -s "outputs/$f" || { echo "::error::مخرَج مفقود أو فارغ: $f"; exit 1; }
           done
           python - <<'EOF'

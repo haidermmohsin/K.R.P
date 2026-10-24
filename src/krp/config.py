@@ -31,6 +31,7 @@ class TagSpec:
     limits: tuple[float, float]
     source: str
     desc: str = ""
+    equipment: str = ""  # رقم المعدة في الـ PFD — مرجع للتحقق من كل وسم
 
     @property
     def is_lab(self) -> bool:
@@ -53,6 +54,7 @@ class TagMap:
                 limits=(float(t["limits"][0]), float(t["limits"][1])),
                 source=t.get("source", "dcs"),
                 desc=t.get("desc", ""),
+                equipment=str(t.get("equipment", "")),
             )
             for t in raw["tags"]
         )

@@ -21,10 +21,12 @@ features:
   lags_h: [1, 3, 6, 12, 24]
   rolling_windows_h: [6, 24, 72]
   ph_target_band: [5.5, 6.5]   # النطاق المستهدف لحموضة ماء القمة
-  dewpoint_margin_alarm: 14.0  # degC — تحت هذا الفرق يبدأ خطر التكثّف المبكر
+  # هامش الحوض الساخن 01-V-003 تحت هذا الحد يعني بدء التكثّف الحمضي فيه.
+  # 14°م ممارسة شائعة في المصافي؛ عايرها على بيانات وحدتك الحقيقية.
+  dewpoint_margin_alarm: 14.0  # degC
 
 model:
-  target: ovhd_water_iron
+  target: cdu_sour_water_iron
   horizon_h: 24              # أفق التنبؤ بالساعات
   test_fraction: 0.25        # آخر 25% من الزمن للاختبار (تقسيم زمني لا عشوائي)
   n_splits: 4                # عدد طيّات التحقق الزمني المتدرج

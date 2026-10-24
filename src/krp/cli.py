@@ -76,7 +76,8 @@ def cmd_analyze(args) -> None:
     enriched = pd.concat([df, corrosion_indicators(df, cfg)], axis=1, sort=False)
     report.plot_prediction_timeline(result.predictions, cfg, outdir / "prediction_timeline.png")
     report.plot_feature_importance(result.importances, outdir / "feature_importance.png")
-    report.plot_dewpoint_risk(enriched, cfg, outdir / "dewpoint_risk.png")
+    report.plot_hot_drum_risk(enriched, cfg, outdir / "hot_drum_risk.png")
+    report.plot_chloride_risk(enriched, cfg, outdir / "chloride_risk.png")
 
     board.to_csv(outdir / "model_leaderboard.csv", index=False)
     result.importances.head(40).to_csv(outdir / "feature_importance.csv", header=["importance"])

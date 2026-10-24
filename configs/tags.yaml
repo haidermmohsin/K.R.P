@@ -1,231 +1,416 @@
 # ============================================================================
-# خريطة وسوم DCS لوحدة CDU/VDU  —  Unit 01
+# خريطة وسوم DCS — وحدة 01 التقطير الجوي والفراغي (CDU/VDU)
+# مشروع مصفى كربلاء — مبنية على IONE-AA01-PFD-0010-001 (4 صفحات)
 # ----------------------------------------------------------------------------
-# `dcs_tag`  : اسم الوسم كما يظهر في مؤرخ البيانات (PI / PHD / Experion)
-# `canonical`: الاسم الموحّد المستخدم داخل الكود (لا تغيّره)
-# `unit`     : وحدة القياس
-# `limits`   : [أدنى, أقصى] قيمة فيزيائية معقولة — أي قيمة خارجها تُعتبر خطأ حسّاس
-# `source`   : dcs = لحظي من غرفة السيطرة | lab = تحليل مختبري دوري
-#
-# ملاحظة: عدّل عمود dcs_tag ليطابق وسوم وحدتك الفعلية من الـ PFD / P&ID.
+# `canonical` : الاسم الموحّد داخل الكود — لا تغيّره
+# `dcs_tag`   : اسم الوسم في المؤرخ (PI/PHD). **القيم أدناه مبدئية**: أرقام
+#               المعدات مأخوذة من الـ PFD وهي صحيحة، أما أرقام حلقات القياس
+#               فمُولَّدة على نمط الوحدة وتحتاج استبدالاً من قائمة وسوم الـ DCS.
+# `equipment` : رقم المعدة في الـ PFD — مرجع للتحقق من كل وسم
+# `limits`    : المدى الفيزيائي المعقول؛ خارجه يُعدّ خطأ حسّاس
+# `source`    : dcs = لحظي | lab = تحليل مختبري دوري
 # ============================================================================
 
 timestamp_column: timestamp
 
 tags:
-  # ---------------- تغذية الخام والديسولتر ----------------
+  # ======================= تغذية الخام =======================
   - canonical: crude_feed_rate
     dcs_tag: 01FI1001
+    equipment: 01-P-001A/B
     unit: m3/h
     limits: [0, 1200]
     source: dcs
-    desc: معدل تغذية الخام إلى الوحدة
+    desc: معدل تغذية الخام من وحدة الخزن 52
 
-  - canonical: desalter_dp
-    dcs_tag: 01PDI1010
-    unit: bar
-    limits: [0, 3]
-    source: dcs
-    desc: فرق الضغط عبر الديسولتر
-
-  - canonical: desalter_temp
-    dcs_tag: 01TI1011
-    unit: degC
-    limits: [80, 160]
-    source: dcs
-    desc: حرارة الخام عند مدخل الديسولتر
-
-  - canonical: wash_water_rate
-    dcs_tag: 01FI1012
-    unit: m3/h
-    limits: [0, 120]
-    source: dcs
-    desc: معدل ماء الغسيل
-
-  - canonical: desalter_voltage
-    dcs_tag: 01EI1013
-    unit: kV
-    limits: [0, 35]
-    source: dcs
-    desc: جهد الشبكة الكهربائية للديسولتر
-
-  - canonical: salt_in_crude_ptb
-    dcs_tag: LAB_SALT_PTB
-    unit: PTB
-    limits: [0, 60]
-    source: lab
-    desc: الملح المتبقي بعد إزالة الملح (رطل لكل ألف برميل)
-
-  - canonical: bsw_percent
-    dcs_tag: LAB_BSW
-    unit: vol%
-    limits: [0, 5]
-    source: lab
-    desc: الماء والرواسب في الخام المُعالج
-
-  # ---------------- مواصفات الخام ----------------
   - canonical: crude_api
-    dcs_tag: LAB_API
+    dcs_tag: LAB_CRUDE_API
+    equipment: "-"
     unit: degAPI
     limits: [15, 50]
     source: lab
-    desc: كثافة الخام
+    desc: كثافة الخام (حالة التصميم خام البصرة)
 
   - canonical: crude_sulfur
-    dcs_tag: LAB_SULFUR
+    dcs_tag: LAB_CRUDE_S
+    equipment: "-"
     unit: wt%
     limits: [0, 5]
     source: lab
-    desc: نسبة الكبريت الكلي
+    desc: الكبريت الكلي — يقود التآكل الكبريتي في الأفران
 
   - canonical: crude_tan
-    dcs_tag: LAB_TAN
+    dcs_tag: LAB_CRUDE_TAN
+    equipment: "-"
     unit: mgKOH/g
     limits: [0, 4]
     source: lab
-    desc: الرقم الحمضي الكلي — مؤشر تآكل الأحماض النفثينية
+    desc: الرقم الحمضي — يقود تآكل الأحماض النفثينية في الـ VDU
 
-  # ---------------- الفرن والبرج الجوي ----------------
+  # ============ إزالة الملح — مرحلتان على التسلسل ============
+  # الـ PFD يُظهر 01-V-001A ثم 01-V-001B، مع حقن مُزيل استحلاب قبل كلٍّ منهما.
+  # كفاءة المرحلتين تتضاعف: 95% × 95% ≈ 99.75%، لذلك تدهور إحداهما وحدها
+  # قد لا يظهر في الملح النهائي حتى تتدهور الأخرى — وهذا ما يجعل مراقبة
+  # كل مرحلة على حدة أهم من مراقبة الناتج النهائي فقط.
+  - canonical: desalter1_temp
+    dcs_tag: 01TI1011
+    equipment: 01-V-001A
+    unit: degC
+    limits: [80, 160]
+    source: dcs
+    desc: حرارة الخام عند مدخل الديسولتر الأول
+
+  - canonical: desalter1_dp
+    dcs_tag: 01PDI1012
+    equipment: 01-V-001A
+    unit: bar
+    limits: [0, 3]
+    source: dcs
+    desc: فرق الضغط عبر الديسولتر الأول
+
+  - canonical: desalter1_voltage
+    dcs_tag: 01EI1013
+    equipment: 01-V-001A
+    unit: kV
+    limits: [0, 35]
+    source: dcs
+    desc: جهد الشبكة الكهربائية للديسولتر الأول
+
+  - canonical: desalter2_temp
+    dcs_tag: 01TI1021
+    equipment: 01-V-001B
+    unit: degC
+    limits: [80, 160]
+    source: dcs
+    desc: حرارة الخام عند مدخل الديسولتر الثاني
+
+  - canonical: desalter2_dp
+    dcs_tag: 01PDI1022
+    equipment: 01-V-001B
+    unit: bar
+    limits: [0, 3]
+    source: dcs
+    desc: فرق الضغط عبر الديسولتر الثاني
+
+  - canonical: desalter2_voltage
+    dcs_tag: 01EI1023
+    equipment: 01-V-001B
+    unit: kV
+    limits: [0, 35]
+    source: dcs
+    desc: جهد الشبكة الكهربائية للديسولتر الثاني
+
+  - canonical: wash_water_rate
+    dcs_tag: 01FI1030
+    equipment: 01-P-013A/B
+    unit: m3/h
+    limits: [0, 120]
+    source: dcs
+    desc: ماء الغسيل من مضخات ماء الديسولتر
+
+  - canonical: wash_water_recycle_rate
+    dcs_tag: 01FI1031
+    equipment: 01-P-014A/B
+    unit: m3/h
+    limits: [0, 120]
+    source: dcs
+    desc: ماء الغسيل المُعاد تدويره
+
+  - canonical: demulsifier1_rate
+    dcs_tag: 01FI1014
+    equipment: 01-V-001A
+    unit: L/h
+    limits: [0, 30]
+    source: dcs
+    desc: حقن مُزيل الاستحلاب قبل الديسولتر الأول
+
+  - canonical: demulsifier2_rate
+    dcs_tag: 01FI1024
+    equipment: 01-V-001B
+    unit: L/h
+    limits: [0, 30]
+    source: dcs
+    desc: حقن مُزيل الاستحلاب قبل الديسولتر الثاني
+
+  - canonical: caustic_rate
+    dcs_tag: 01FI1040
+    equipment: 01-V-001B
+    unit: L/h
+    limits: [0, 25]
+    source: dcs
+    desc: حقن القلوي بعد إزالة الملح — يثبّت الكلورايد كملح غير متحلل
+
+  - canonical: salt_in_crude_ptb
+    dcs_tag: LAB_SALT_PTB
+    equipment: 01-P-001A/B
+    unit: PTB
+    limits: [0, 60]
+    source: lab
+    desc: الملح المتبقي في الخام المُزال ملحه — المصدر الجذري لـ HCl
+
+  - canonical: bsw_percent
+    dcs_tag: LAB_BSW
+    equipment: 01-P-001A/B
+    unit: vol%
+    limits: [0, 5]
+    source: lab
+    desc: الماء والرواسب بعد إزالة الملح
+
+  # =================== الفرن والبرج الجوي ===================
   - canonical: furnace_coil_outlet_temp
     dcs_tag: 01TI1101
+    equipment: 01-H-001
     unit: degC
     limits: [300, 400]
     source: dcs
-    desc: حرارة مخرج ملف الفرن (COT)
+    desc: حرارة مخرج ملف فرن الخام (COT)
 
   - canonical: furnace_o2
     dcs_tag: 01AI1105
+    equipment: 01-H-001
     unit: vol%
     limits: [0, 12]
     source: dcs
-    desc: الأوكسجين الزائد في غازات المدخنة
+    desc: الأوكسجين الزائد في غازات مدخنة فرن الخام
 
   - canonical: atm_flash_zone_temp
     dcs_tag: 01TI1201
+    equipment: 01-T-001
     unit: degC
     limits: [300, 400]
     source: dcs
-    desc: حرارة منطقة التبخير الوميضي في البرج الجوي
+    desc: حرارة منطقة التبخير الوميضي في البرج الجوي (48 صينية)
 
   - canonical: stripping_steam_rate
     dcs_tag: 01FI1210
+    equipment: 01-T-001
     unit: kg/h
     limits: [0, 8000]
     source: dcs
     desc: بخار التعرية إلى قاع البرج الجوي
 
-  # ---------------- قمة البرج الجوي (منطقة التآكل الحرجة) ----------------
-  - canonical: ovhd_temp
-    dcs_tag: 01TI1301
-    unit: degC
-    limits: [80, 180]
-    source: dcs
-    desc: حرارة بخار القمة قبل المكثف
-
-  - canonical: ovhd_pressure
-    dcs_tag: 01PI1302
-    unit: barg
-    limits: [0, 3]
-    source: dcs
-    desc: ضغط قمة البرج الجوي
-
-  - canonical: reflux_rate
+  - canonical: atm_reflux_rate
     dcs_tag: 01FI1303
+    equipment: 01-P-002A/B
     unit: m3/h
     limits: [0, 400]
     source: dcs
-    desc: معدل الرجوع إلى القمة
+    desc: معدل الرجوع إلى قمة البرج الجوي
 
-  - canonical: ovhd_vapor_rate
+  # ====== قمة البرج الجوي — نظام الحوضين (Hot/Cold Drum) ======
+  # تصميم الوحدة: بخار القمة يُبرَّد جزئياً في 01-E-003 ثم يدخل حوض الرجوع
+  # الساخن 01-V-003 عند نحو 138°م — أي **فوق** نقطة ندى الماء عمداً، فلا
+  # يتكوّن طور مائي هناك. التكثّف الأول يقع لاحقاً في 01-EA-004/01-E-020،
+  # والماء الحامض يُجمع في 01-V-005. لذلك هامش نقطة الندى الحرج يُحسب عند
+  # ظروف 01-V-003 لا عند قمة البرج: نزوله نحو الصفر يعني تكثّفاً حمضياً
+  # مبكراً داخل الحوض الساخن وهو الحدث الخطر الأول في هذه الوحدة.
+  - canonical: atm_ovhd_temp
+    dcs_tag: 01TI1301
+    equipment: 01-T-001
+    unit: degC
+    limits: [120, 200]
+    source: dcs
+    desc: حرارة بخار قمة البرج الجوي قبل 01-E-003 (تصميماً نحو 172°م)
+
+  - canonical: atm_ovhd_pressure
+    dcs_tag: 01PI1302
+    equipment: 01-T-001
+    unit: barg
+    limits: [0, 3]
+    source: dcs
+    desc: ضغط قمة البرج الجوي (تصميماً نحو 1.5 kg/cm²g)
+
+  - canonical: atm_ovhd_vapor_rate
     dcs_tag: 01FI1304
+    equipment: 01-T-001
     unit: kg/h
     limits: [0, 80000]
     source: dcs
     desc: معدل بخار القمة الهيدروكربوني
 
-  - canonical: condenser_outlet_temp
-    dcs_tag: 01TI1310
+  - canonical: hot_drum_temp
+    dcs_tag: 01TI1340
+    equipment: 01-V-003
     unit: degC
-    limits: [25, 120]
+    limits: [100, 180]
     source: dcs
-    desc: حرارة مخرج مكثف القمة
+    desc: "حرارة حوض الرجوع الساخن (تصميماً 138°م) — المتغيّر الحرج للتآكل"
 
-  # ---------------- الحقن الكيميائي ----------------
-  - canonical: neutralizer_rate
-    dcs_tag: 01FI1320
+  - canonical: hot_drum_pressure
+    dcs_tag: 01PI1341
+    equipment: 01-V-003
+    unit: barg
+    limits: [0, 3]
+    source: dcs
+    desc: ضغط حوض الرجوع الساخن (تصميماً 1.2 kg/cm²g)
+
+  - canonical: ovhd_air_cooler_outlet_temp
+    dcs_tag: 01TI1350
+    equipment: 01-EA-004
+    unit: degC
+    limits: [30, 120]
+    source: dcs
+    desc: حرارة مخرج المبرد الهوائي لقمة البرج الجوي
+
+  - canonical: accumulator_temp
+    dcs_tag: 01TI1360
+    equipment: 01-V-005
+    unit: degC
+    limits: [25, 90]
+    source: dcs
+    desc: حرارة حوض تجميع منتج القمة (تصميماً 38°م) — نقطة فصل الماء الحامض
+
+  - canonical: accumulator_pressure
+    dcs_tag: 01PI1361
+    equipment: 01-V-005
+    unit: barg
+    limits: [0, 3]
+    source: dcs
+    desc: ضغط حوض تجميع منتج القمة (تصميماً 0.7 kg/cm²g)
+
+  # ============ الحقن الكيميائي — ثلاث نقاط للقمة ============
+  - canonical: corrosion_inhibitor_rate
+    dcs_tag: 01FI1310
+    equipment: 01-T-001
+    unit: L/h
+    limits: [0, 40]
+    source: dcs
+    desc: مثبّط التآكل على خط قمة البرج إلى 01-E-003
+
+  - canonical: neutralizer_tower_rate
+    dcs_tag: 01FI1311
+    equipment: 01-T-001
     unit: L/h
     limits: [0, 60]
     source: dcs
-    desc: معدل حقن المحايد (neutralizing amine)
+    desc: الأمين المحايد عند قمة البرج الجوي
+
+  - canonical: neutralizer_drum_rate
+    dcs_tag: 01FI1342
+    equipment: 01-V-003
+    unit: L/h
+    limits: [0, 60]
+    source: dcs
+    desc: الأمين المحايد عند قمة حوض الرجوع الساخن
 
   - canonical: filmer_rate
-    dcs_tag: 01FI1321
+    dcs_tag: 01FI1343
+    equipment: 01-V-003
     unit: L/h
     limits: [0, 30]
     source: dcs
-    desc: معدل حقن الأمين الفيلمي (filming amine)
+    desc: الأمين الفيلمي على بخار القمة الخارج من 01-V-003
 
-  - canonical: caustic_rate
-    dcs_tag: 01FI1015
-    unit: L/h
-    limits: [0, 25]
-    source: dcs
-    desc: معدل حقن القلوي بعد الديسولتر
-
-  # ---------------- ماء القمة المفصول (Boot Water) ----------------
-  - canonical: ovhd_water_ph
-    dcs_tag: LAB_OVHD_PH
+  # ======== الماء الحامض للقمة الجوية — 01-V-005 (الهدف) ========
+  - canonical: cdu_sour_water_ph
+    dcs_tag: LAB_CDU_SW_PH
+    equipment: 01-P-009A/B
     unit: pH
     limits: [3, 10]
     source: lab
-    desc: حموضة الماء المفصول في حوض القمة
+    desc: حموضة الماء الحامض من حوض تجميع القمة
 
-  - canonical: ovhd_water_chloride
-    dcs_tag: LAB_OVHD_CL
+  - canonical: cdu_sour_water_chloride
+    dcs_tag: LAB_CDU_SW_CL
+    equipment: 01-P-009A/B
     unit: ppm
     limits: [0, 500]
     source: lab
-    desc: الكلورايد في ماء القمة
+    desc: الكلورايد في الماء الحامض للقمة الجوية
 
-  - canonical: ovhd_water_h2s
-    dcs_tag: LAB_OVHD_H2S
+  - canonical: cdu_sour_water_h2s
+    dcs_tag: LAB_CDU_SW_H2S
+    equipment: 01-P-009A/B
     unit: ppm
     limits: [0, 500]
     source: lab
-    desc: كبريتيد الهيدروجين في ماء القمة
+    desc: كبريتيد الهيدروجين في الماء الحامض للقمة الجوية
 
-  - canonical: ovhd_water_iron
-    dcs_tag: LAB_OVHD_FE
+  - canonical: cdu_sour_water_iron
+    dcs_tag: LAB_CDU_SW_FE
+    equipment: 01-P-009A/B
     unit: ppm
     limits: [0, 30]
     source: lab
-    desc: "الحديد في ماء القمة — المتغيّر الهدف"
+    desc: "الحديد في الماء الحامض للقمة الجوية — المتغيّر الهدف"
 
-  # ---------------- وحدة التقطير الفراغي VDU ----------------
+  # ============== وحدة التقطير الفراغي — VDU ==============
   - canonical: vac_heater_cot
     dcs_tag: 01TI2101
+    equipment: 01-H-051
     unit: degC
-    limits: [330, 420]
+    limits: [330, 430]
     source: dcs
-    desc: حرارة مخرج فرن الفراغ
+    desc: حرارة مخرج فرن الفراغ (تصميماً نحو 407°م)
+
+  - canonical: velocity_steam_rate
+    dcs_tag: 01FI2102
+    equipment: 01-H-051
+    unit: kg/h
+    limits: [0, 6000]
+    source: dcs
+    desc: بخار السرعة في ملفات فرن الفراغ — يقلّل زمن المكوث ويكبح التكسير
 
   - canonical: vac_transfer_line_temp
     dcs_tag: 01TI2105
+    equipment: 01-T-051
     unit: degC
-    limits: [330, 420]
+    limits: [330, 430]
     source: dcs
-    desc: حرارة خط النقل إلى برج الفراغ — منطقة تآكل NAC
+    desc: حرارة خط النقل إلى برج الفراغ — منطقة تآكل الأحماض النفثينية
+
+  - canonical: vac_flash_zone_temp
+    dcs_tag: 01TI2201
+    equipment: 01-T-051
+    unit: degC
+    limits: [330, 430]
+    source: dcs
+    desc: حرارة منطقة التبخير الوميضي في برج الفراغ (تصميماً نحو 394°م)
 
   - canonical: vac_tower_top_pressure
-    dcs_tag: 01PI2201
+    dcs_tag: 01PI2202
+    equipment: 01-T-051
     unit: mmHg
     limits: [5, 120]
     source: dcs
     desc: ضغط قمة برج الفراغ
 
-  - canonical: vac_bottom_temp
+  - canonical: vac_residue_temp
     dcs_tag: 01TI2210
+    equipment: 01-P-054A/B
     unit: degC
-    limits: [300, 400]
+    limits: [150, 400]
     source: dcs
-    desc: حرارة قاع برج الفراغ
+    desc: حرارة مخلفات الفراغ عند المخرج
+
+  - canonical: vac_corrosion_inhibitor_rate
+    dcs_tag: 01FI2220
+    equipment: 01-T-051
+    unit: L/h
+    limits: [0, 40]
+    source: dcs
+    desc: مثبّط التآكل على قمة برج الفراغ
+
+  - canonical: vac_neutralizer_rate
+    dcs_tag: 01FI2221
+    equipment: 01-T-051
+    unit: L/h
+    limits: [0, 60]
+    source: dcs
+    desc: الأمين المحايد على قمة برج الفراغ
+
+  - canonical: vdu_sour_water_iron
+    dcs_tag: LAB_VDU_SW_FE
+    equipment: 01-P-056A/B
+    unit: ppm
+    limits: [0, 30]
+    source: lab
+    desc: الحديد في الماء الحامض لبرج الفراغ (من 01-V-051) — هدف بديل
+
+  - canonical: vdu_sour_water_ph
+    dcs_tag: LAB_VDU_SW_PH
+    equipment: 01-P-056A/B
+    unit: pH
+    limits: [3, 10]
+    source: lab
+    desc: حموضة الماء الحامض لبرج الفراغ

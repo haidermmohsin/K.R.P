@@ -47,10 +47,10 @@ def test_remove_frozen_skips_lab_columns():
 
 def test_physical_limits_clear_impossible_values(cfg):
     tag_map = cfg["_tag_map"]
-    df = pd.DataFrame({"ovhd_water_ph": [6.0, 99.0, -3.0]}, index=_idx(3))
+    df = pd.DataFrame({"cdu_sour_water_ph": [6.0, 99.0, -3.0]}, index=_idx(3))
     out = apply_physical_limits(df, tag_map)
-    assert out["ovhd_water_ph"].tolist()[0] == 6.0
-    assert out["ovhd_water_ph"].isna().sum() == 2
+    assert out["cdu_sour_water_ph"].tolist()[0] == 6.0
+    assert out["cdu_sour_water_ph"].isna().sum() == 2
 
 
 def test_outlier_removal_targets_spikes():

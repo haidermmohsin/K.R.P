@@ -100,18 +100,22 @@ def plot_feature_importance(importances: pd.Series, out: Path, top_n: int = 15,
     return out
 
 
-def plot_dewpoint_risk(df: pd.DataFrame, cfg: dict, out: Path,
-                       theme_name: str = "light") -> Path:
-    """الحديد مقابل هامش نقطة الندى — الرسم الذي يقنع مهندس التشغيل.
+def plot_risk_scatter(df: pd.DataFrame, cfg: dict, out: Path, x_col: str,
+                      title: str, xlabel: str, threshold: float | None = None,
+                      threshold_label: str = "حد الأمان",
+                      theme_name: str = "light") -> Path | None:
+    """الحديد مقابل متغيّر تشغيلي، مصنّفاً بمستوى الإنذار.
 
-    كل نقطة فترة تشغيل؛ اللون يعبّر عن مستوى الإنذار ومعه نص صريح،
-    والخط العمودي هو الهامش الذي يبدأ الخطر تحته.
+    كل نقطة فترة تشغيل. اللون والشكل والنص تحمل مستوى الخطر معاً، فلا
+    يعتمد التمييز على اللون وحده. يعيد None إذا لم تتوفر الأعمدة.
     """
     th = THEMES[theme_name]
     target = cfg["model"]["target"]
-    sub = df[["dewpoint_margin_c", target]].dropna()
+    if x_col not in df.columns or target not in df.columns:
+        return None
+    sub = df[[x_col, target]].dropna()
     if sub.empty:
-        return out
+        return None
 
     warn, crit = cfg["alarm"]["iron_warning_ppm"], cfg["alarm"]["iron_critical_ppm"]
     bands = [
@@ -123,17 +127,16 @@ def plot_dewpoint_risk(df: pd.DataFrame, cfg: dict, out: Path,
     fig, ax = plt.subplots(figsize=(8.5, 5), facecolor=th["surface"])
     for mask, color, label, marker in bands:
         if mask.any():
-            ax.scatter(sub.loc[mask, "dewpoint_margin_c"], sub.loc[mask, target],
+            ax.scatter(sub.loc[mask, x_col], sub.loc[mask, target],
                        s=26, c=color, marker=marker, label=label,
                        edgecolors=th["surface"], linewidths=0.6, alpha=0.85)
 
-    limit = cfg["features"]["dewpoint_margin_alarm"]
-    ax.axvline(limit, color=th["ink2"], linewidth=1.4, linestyle="--")
-    ax.text(limit, ax.get_ylim()[1], " حد الأمان ",
-            color=th["ink2"], fontsize=8, va="top")
+    if threshold is not None:
+        ax.axvline(threshold, color=th["ink2"], linewidth=1.4, linestyle="--")
+        ax.text(threshold, ax.get_ylim()[1], f" {threshold_label} ",
+                color=th["ink2"], fontsize=8, va="top")
 
-    _style(ax, th, "الحديد مقابل هامش نقطة ندى الماء",
-           xlabel="هامش نقطة الندى (°م)", ylabel="Fe (ppm)")
+    _style(ax, th, title, xlabel=xlabel, ylabel="Fe (ppm)")
     leg = ax.legend(frameon=False, fontsize=9, loc="upper right")
     for t in leg.get_texts():
         t.set_color(th["ink2"])
@@ -141,3 +144,35 @@ def plot_dewpoint_risk(df: pd.DataFrame, cfg: dict, out: Path,
     fig.savefig(out, dpi=150, facecolor=th["surface"])
     plt.close(fig)
     return out
+
+
+def plot_hot_drum_risk(df: pd.DataFrame, cfg: dict, out: Path,
+                       theme_name: str = "light") -> Path | None:
+    """الحديد مقابل هامش الحوض الساخن 01-V-003.
+
+    في وحدة ذات حوض ساخن يبقى هذا الهامش واسعاً في التشغيل الطبيعي، فليس
+    هو القائد الروتيني للتآكل. قيمة الرسم أنه يكشف الفترات القليلة التي
+    يضيق فيها — وهي الأخطر، إذ يعني ضيقه تكثّفاً حمضياً داخل الحوض نفسه.
+    """
+    return plot_risk_scatter(
+        df, cfg, out, x_col="hot_drum_margin_c",
+        title="الحديد مقابل هامش الحوض الساخن 01-V-003",
+        xlabel="هامش نقطة الندى (°م)",
+        threshold=cfg["features"]["dewpoint_margin_alarm"],
+        theme_name=theme_name,
+    )
+
+
+def plot_chloride_risk(df: pd.DataFrame, cfg: dict, out: Path,
+                       theme_name: str = "light") -> Path | None:
+    """الحديد مقابل الكلورايد في الماء الحامض — القائد الروتيني للتآكل.
+
+    هذا هو الرسم الذي يُعرض على مهندس التشغيل: الكلورايد متغيّر يملك
+    السيطرة عليه عبر أداء الديسولتر وماء الغسيل، والعلاقة مباشرة.
+    """
+    return plot_risk_scatter(
+        df, cfg, out, x_col="cdu_sour_water_chloride",
+        title="الحديد مقابل الكلورايد في الماء الحامض",
+        xlabel="الكلورايد (ppm)",
+        theme_name=theme_name,
+    )

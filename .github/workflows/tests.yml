@@ -1,0 +1,59 @@
+name: tests
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt pytest
+
+      - name: Run unit tests
+        run: python -m pytest tests -q
+
+      # اختبار دخان: يشغّل الخط كاملاً على بيانات اصطناعية.
+      # الاختبارات الوحدوية تغطي الأجزاء، وهذا يثبت أنها تعمل موصولة معاً.
+      - name: End-to-end smoke test
+        env:
+          PYTHONPATH: src
+        run: |
+          python -m krp.cli simulate --days 60 --out data/raw/ci_sim.csv
+          python -m krp.cli analyze --input data/raw/ci_sim.csv --outdir outputs
+
+      - name: Verify expected outputs exist
+        run: |
+          set -e
+          for f in summary.json predictions.csv model_leaderboard.csv \
+                   prediction_timeline.png feature_importance.png dewpoint_risk.png; do
+            test -s "outputs/$f" || { echo "::error::مخرَج مفقود أو فارغ: $f"; exit 1; }
+          done
+          python - <<'EOF'
+          import json
+          s = json.load(open("outputs/summary.json", encoding="utf-8"))
+          # النموذج يجب أن يتفوق على خط الأساس، وإلا فالخط لا يتعلّم شيئاً
+          assert s["best_model"] != "baseline_mean", s["best_model"]
+          assert s["n_features"] > 50, s["n_features"]
+          assert s["rows_analyzed"] > 500, s["rows_analyzed"]
+          print("✓ الملخّص سليم — النموذج:", s["best_model"],
+                "| MAE:", round(s["metrics"]["MAE"], 3))
+          EOF

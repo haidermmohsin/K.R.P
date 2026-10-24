@@ -4,84 +4,141 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>لوحة K.R.P</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#f6f7f9;--card:#fff;--fg:#1c2430;--mut:#667085;--line:#e3e6eb;--acc:#2563eb;--ok:#15803d;--warn:#b45309;--crit:#b91c1c;--s1:#2563eb;--s2:#d97706}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1419;--card:#171d24;--fg:#e6e9ee;--mut:#98a2b3;--line:#2a323c;--acc:#60a5fa;--ok:#4ade80;--warn:#fbbf24;--crit:#f87171;--s1:#60a5fa;--s2:#fbbf24}}
-:root[data-theme="dark"]{--bg:#0f1419;--card:#171d24;--fg:#e6e9ee;--mut:#98a2b3;--line:#2a323c;--acc:#60a5fa;--ok:#4ade80;--warn:#fbbf24;--crit:#f87171;--s1:#60a5fa;--s2:#fbbf24}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.6 system-ui,"Segoe UI",Tahoma,sans-serif}
-header{padding:16px;border-bottom:1px solid var(--line);background:var(--card);display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between}
-h1{font-size:19px;margin:0}h2{font-size:16px;margin:0 0 10px}
-main{max-width:1200px;margin:auto;padding:16px;display:grid;gap:16px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px}
-.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-button,label.btn{background:var(--acc);color:#fff;border:0;border-radius:8px;padding:8px 14px;cursor:pointer;font:inherit}
-button.ghost{background:transparent;color:var(--fg);border:1px solid var(--line)}
+/* لغة التصميم مأخوذة من نظام هوية المنارة: حبر + ورق + لون برتقالي-أحمر واحد */
+:root{--brand:#E63411;--ink:#1D1D1B;--ink-soft:#3a3a37;--muted:#6b6b66;--line:#e4e2de;--paper:#F3F2EE;--card:#fff;--bg:#fafaf8;
+--ok:#1e7d4f;--ok-bg:#e6f4ec;--warn:#b8791a;--warn-bg:#fbf0dd;--crit:#a8280f;--crit-bg:#fdeee9;--s1:#1D1D1B;--s2:#E63411;--head-h:60px}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--brand:#f04f2c;--ink:#ecebe7;--ink-soft:#c9c8c3;--muted:#9a9993;--line:#2e2d2a;--paper:#1e1d1b;--card:#1a1918;--bg:#151514;--ok:#5cc28f;--ok-bg:#12291d;--warn:#e0a84a;--warn-bg:#35280f;--crit:#f79176;--crit-bg:#3a1a12;--s1:#ecebe7;--s2:#f04f2c}}
+:root[data-theme="dark"]{--brand:#f04f2c;--ink:#ecebe7;--ink-soft:#c9c8c3;--muted:#9a9993;--line:#2e2d2a;--paper:#1e1d1b;--card:#1a1918;--bg:#151514;--ok:#5cc28f;--ok-bg:#12291d;--warn:#e0a84a;--warn-bg:#35280f;--crit:#f79176;--crit-bg:#3a1a12;--s1:#ecebe7;--s2:#f04f2c}
+*{box-sizing:border-box;margin:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.6 "IBM Plex Sans Arabic",system-ui,sans-serif}
+code{font-size:13px;background:var(--paper);padding:1px 5px;border-radius:4px}
+.site-head{height:var(--head-h);position:sticky;top:0;z-index:5;background:var(--card);border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 16px;gap:12px}
+.band{position:absolute;inset:0 0 auto;height:3px;background:var(--brand)}
+.lockup{display:flex;align-items:center;gap:10px;font-weight:700}
+.mark{width:32px;height:32px;border-radius:8px;background:var(--brand);color:#fff;display:grid;place-items:center;font-size:13px;letter-spacing:.5px}
+.head-title{font-weight:500;font-size:14px;color:var(--muted);padding-inline-start:12px;border-inline-start:1px solid var(--line)}
+.acts{display:flex;gap:8px;align-items:center}
+.btn,.tbtn{font:inherit;font-size:13px;min-height:36px;padding:6px 14px;border-radius:8px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.btn{background:var(--brand);color:#fff;border:0;font-weight:600}
+.tbtn{border:1px solid var(--line);background:var(--card);color:var(--ink)}
+.tbtn:hover{border-color:var(--ink)}
 input[type=file]{display:none}
-input[type=number]{width:100%;padding:6px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--fg);font:inherit}
-.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
-.kpi{border:1px solid var(--line);border-radius:10px;padding:12px}
-.kpi .v{font-size:24px;font-weight:700;font-variant-numeric:tabular-nums}
-.kpi .l{color:var(--mut);font-size:13px}
-.ok{color:var(--ok)}.warn{color:var(--warn)}.crit{color:var(--crit)}
+.shell{display:grid;grid-template-columns:240px 1fr;min-height:calc(100vh - var(--head-h))}
+.side{border-inline-end:1px solid var(--line);background:var(--card);padding:20px 12px;position:sticky;top:var(--head-h);height:calc(100vh - var(--head-h))}
+.side h2{font-size:12px;font-weight:600;color:var(--muted);margin:0 10px 6px}
+.nav-i{display:flex;gap:8px;width:100%;padding:8px 10px;border:0;border-radius:8px;background:none;font:inherit;font-size:14px;color:var(--ink-soft);text-align:start;cursor:pointer;margin-bottom:2px}
+.nav-i:hover{background:var(--paper)}
+.nav-i[aria-current="true"]{background:var(--ink);color:var(--card)}
+.side .foot{position:absolute;bottom:16px;inset-inline:22px;font-size:12px;color:var(--muted)}
+.content{padding:28px clamp(16px,3vw,40px) 64px;min-width:0}
+.c-head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:20px}
+.c-head h1{font-size:24px}.c-head p{color:var(--muted);font-size:14px}
+.view{display:none}.view.on{display:block}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:20px}
+.tile{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+.tile .v{font-size:28px;font-weight:700;line-height:1.2;font-variant-numeric:tabular-nums}
+.tile .l{font-size:13px;color:var(--muted);margin-top:4px}
+.tile.hero{border-color:transparent}
+.tile.ok.hero{background:var(--ok-bg)}.tile.warn.hero{background:var(--warn-bg)}.tile.crit.hero{background:var(--crit-bg)}
+.ok .v,.v.ok,b.ok{color:var(--ok)}.warn .v,.v.warn{color:var(--warn)}.crit .v,.v.crit,b.crit{color:var(--crit)}
+.badge{display:inline-block;font-size:12px;font-weight:600;padding:1px 8px;border-radius:10px}
+.badge.ok{background:var(--ok-bg);color:var(--ok)}.badge.warn{background:var(--warn-bg);color:var(--warn)}.badge.crit{background:var(--crit-bg);color:var(--crit)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:18px;margin-bottom:16px}
+.card h2{font-size:16px;margin-bottom:4px}.card .sub{color:var(--muted);font-size:13px;margin-bottom:10px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:16px}
+.grid2 .card{margin:0}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;background:var(--card);overflow:hidden}
+.seg button{font:inherit;font-size:13px;padding:6px 12px;border:0;border-inline-start:1px solid var(--line);background:none;cursor:pointer;color:var(--ink-soft)}
+.seg button:first-child{border-inline-start:0}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--card)}
 canvas{width:100%;height:260px;display:block}
-.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px}
-.mut{color:var(--mut);font-size:13px}
-table{width:100%;border-collapse:collapse;font-size:13px}td,th{padding:6px;border-bottom:1px solid var(--line);text-align:right}
-.tbl{max-height:320px;overflow:auto}
-.legend span{display:inline-flex;align-items:center;gap:4px;margin-inline-end:12px;font-size:13px}
-.legend i{width:12px;height:3px;display:inline-block}
-.form{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:13px;color:var(--muted);margin-bottom:6px}
+.legend i{width:14px;height:3px;display:inline-block;vertical-align:middle;margin-inline-end:5px;border-radius:2px}
+.form{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+.form label{font-size:13px;font-weight:600;display:grid;gap:4px}
+input[type=number]{width:100%;min-height:40px;padding:6px 12px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);font:inherit;font-weight:400}
+input:focus{outline:2px solid var(--ink);outline-offset:-1px}
+.result{margin-top:16px;padding:14px 16px;border-radius:10px;background:var(--paper);font-size:16px}
+.tbl{max-height:460px;overflow:auto;border:1px solid var(--line);border-radius:10px}
+table{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums}
+th{position:sticky;top:0;background:var(--paper);font-weight:600;color:var(--ink-soft)}
+td,th{padding:8px 12px;border-bottom:1px solid var(--line);text-align:start;white-space:nowrap}
+.status{font-size:13px;color:var(--muted)}
+.drop{border:1.5px dashed var(--line);border-radius:10px;padding:22px;text-align:center;color:var(--muted)}
+.drop.over{border-color:var(--brand);color:var(--brand)}
+@media (max-width:820px){
+ .shell{grid-template-columns:1fr}
+ .side{position:static;height:auto;padding:8px 12px;display:flex;gap:4px;overflow-x:auto;border-inline-end:0;border-bottom:1px solid var(--line)}
+ .side h2,.side .foot,.head-title{display:none}
+ .nav-i{width:auto;white-space:nowrap;margin:0}
+ .grid2{grid-template-columns:1fr}
+ .acts .lbl{display:none}
+}
 </style>
 </head>
 <body>
-<header>
-  <div><h1>K.R.P — مراقبة تآكل قمة البرج الجوي</h1><div class="mut">واجهة مستقلة تعمل في المتصفح مباشرة — لا تحتاج تشغيل بايثون</div></div>
-  <div class="row">
-    <label class="btn">📂 تحميل ملف CSV<input type="file" id="file" accept=".csv,.json"></label>
-    <button class="ghost" id="demo">بيانات تجريبية</button>
-    <button class="ghost" id="theme">🌓</button>
+<header class="site-head"><div class="band"></div>
+  <div class="lockup"><div class="mark">K</div><span>K.R.P</span><span class="head-title">مراقبة تآكل قمة البرج الجوي · CDU/VDU</span></div>
+  <div class="acts">
+    <label class="btn">⬆ <span class="lbl">تحميل ملف</span><input type="file" id="file" accept=".csv,.json"></label>
+    <button class="tbtn" id="demo">تجريبي</button>
+    <button class="tbtn" id="theme" aria-label="تبديل المظهر">المظهر</button>
   </div>
 </header>
-<main>
-  <section class="card" id="status"><span class="mut">حمّل تصدير DCS (بوسوم <code>tags.yaml</code> أو بالأسماء الموحّدة)، أو <code>predictions.csv</code> / <code>summary.json</code> من مجلد outputs، أو اضغط «بيانات تجريبية».</span></section>
-
-  <section class="card"><h2>المؤشرات الحالية</h2><div class="kpis" id="kpis"></div></section>
-
-  <div class="grid2">
-    <section class="card"><h2>الحديد في ماء القمة (ppm)</h2><div class="legend" id="lg1"></div><canvas id="c1"></canvas></section>
-    <section class="card"><h2>هامش نقطة ندى الماء (°م)</h2><div class="legend" id="lg2"></div><canvas id="c2"></canvas></section>
-  </div>
-
-  <section class="card">
-    <h2>حاسبة نقطة الندى (ماذا لو؟)</h2>
-    <div class="form">
-      <label>حرارة القمة °م<input type="number" id="w_t" value="125"></label>
-      <label>ضغط القمة barg<input type="number" id="w_p" value="0.8" step="0.1"></label>
-      <label>بخار التعرية kg/h<input type="number" id="w_s" value="9000"></label>
-      <label>بخار القمة HC kg/h<input type="number" id="w_v" value="120000"></label>
+<div class="shell">
+  <nav class="side">
+    <h2>الوحدة 01</h2>
+    <button class="nav-i" data-v="ov" aria-current="true">لوحة المراقبة</button>
+    <button class="nav-i" data-v="calc">حاسبة نقطة الندى</button>
+    <button class="nav-i" data-v="data">البيانات</button>
+    <button class="nav-i" data-v="set">الإعدادات</button>
+    <div class="foot">تعمل محلياً في المتصفح — لا تُرفع البيانات</div>
+  </nav>
+  <main class="content">
+    <div class="view on" id="v-ov">
+      <div class="c-head"><div><h1>لوحة المراقبة</h1><p class="status" id="status">لا توجد بيانات بعد</p></div>
+        <div class="seg" id="range"><button data-d="7">٧ أيام</button><button data-d="30" aria-pressed="true">٣٠ يوماً</button><button data-d="0">الكل</button></div></div>
+      <div class="tiles" id="kpis"></div>
+      <div class="grid2">
+        <section class="card"><h2>الحديد في ماء القمة</h2><p class="sub">ppm · مع حدّي التنبيه والإنذار</p><div class="legend" id="lg1"></div><canvas id="c1"></canvas></section>
+        <section class="card"><h2>هامش نقطة ندى الماء</h2><p class="sub">°م · تحت العتبة يبدأ التكثّف الحمضي المبكر</p><div class="legend" id="lg2"></div><canvas id="c2"></canvas></section>
+      </div>
     </div>
-    <p id="w_out" style="font-size:17px"></p>
-  </section>
-
-  <section class="card"><h2>آخر القراءات</h2><div class="tbl" id="tbl"></div></section>
-
-  <section class="card"><h2>الإعدادات</h2>
-    <div class="form">
-      <label>حد التنبيه Fe ppm<input type="number" id="s_warn" value="3" step="0.1"></label>
-      <label>حد الإنذار Fe ppm<input type="number" id="s_crit" value="5" step="0.1"></label>
-      <label>عتبة هامش الندى °م<input type="number" id="s_margin" value="14"></label>
-      <label>نطاق pH الأدنى<input type="number" id="s_phlo" value="5.5" step="0.1"></label>
+    <div class="view" id="v-calc">
+      <div class="c-head"><div><h1>حاسبة نقطة الندى</h1><p>جرّب تغيير ظروف التشغيل قبل تطبيقها — بمعادلة أنطوان نفسها المستخدمة في النموذج</p></div></div>
+      <section class="card"><div class="form">
+        <label>حرارة القمة (°م)<input type="number" id="w_t" value="125"></label>
+        <label>ضغط القمة (barg)<input type="number" id="w_p" value="0.8" step="0.1"></label>
+        <label>بخار التعرية (kg/h)<input type="number" id="w_s" value="9000"></label>
+        <label>بخار القمة الهيدروكربوني (kg/h)<input type="number" id="w_v" value="120000"></label>
+      </div><div class="result" id="w_out"></div></section>
     </div>
-    <p class="mut">القيم الافتراضية مطابقة لـ configs/config.yaml.</p>
-  </section>
-</main>
+    <div class="view" id="v-data">
+      <div class="c-head"><div><h1>البيانات</h1><p>آخر 200 قراءة، الأحدث أولاً</p></div></div>
+      <section class="card"><div class="drop" id="drop">اسحب ملف CSV أو summary.json هنا — تصدير DCS بوسوم <code>tags.yaml</code>، أو <code>predictions.csv</code> من مجلد outputs</div></section>
+      <div class="tbl" id="tbl"></div>
+    </div>
+    <div class="view" id="v-set">
+      <div class="c-head"><div><h1>الإعدادات</h1><p>القيم الافتراضية مطابقة لـ <code>configs/config.yaml</code></p></div></div>
+      <section class="card"><div class="form">
+        <label>حد التنبيه Fe (ppm)<input type="number" id="s_warn" value="3" step="0.1"></label>
+        <label>حد الإنذار Fe (ppm)<input type="number" id="s_crit" value="5" step="0.1"></label>
+        <label>عتبة هامش الندى (°م)<input type="number" id="s_margin" value="14"></label>
+        <label>الحد الأدنى لـ pH<input type="number" id="s_phlo" value="5.5" step="0.1"></label>
+      </div></section>
+    </div>
+  </main>
+</div>
 <script>
 // خريطة وسوم DCS ← الأسماء الموحّدة (مطابقة لـ configs/tags.yaml)
 const TAGS={"01FI1001":"crude_feed_rate","01FI1012":"wash_water_rate","LAB_SALT_PTB":"salt_in_crude_ptb","01FI1210":"stripping_steam_rate","01TI1301":"ovhd_temp","01PI1302":"ovhd_pressure","01FI1304":"ovhd_vapor_rate","01FI1320":"neutralizer_rate","LAB_OVHD_PH":"ovhd_water_ph","LAB_OVHD_CL":"ovhd_water_chloride","LAB_OVHD_FE":"ovhd_water_iron"};
 const $=id=>document.getElementById(id);
 const cfg=()=>({warn:+$('s_warn').value,crit:+$('s_crit').value,margin:+$('s_margin').value,phlo:+$('s_phlo').value});
-let rows=[],preds=null;
+let rows=[],preds=null,days=30;
+const view=()=>{if(!days||!rows.length)return rows;const n=days*24;return rows.slice(-n)};
 
 // نفس معادلات src/krp/features.py
 function dewpoint(steam,vap,pbarg){
@@ -126,7 +183,7 @@ function draw(cv,series,thr){
   let lo=Math.min(...all),hi=Math.max(...all);if(hi===lo)hi=lo+1;const p=36,n=Math.max(...series.map(s=>s.data.length));
   const Y=v=>H-20-(H-30)*(v-lo)/(hi-lo);
   const Xr=i=>p+(W-p-8)*i/(n-1||1);
-  x.direction='ltr';x.textAlign='left';x.font='11px system-ui';x.fillStyle=col('--mut');x.strokeStyle=col('--line');
+  x.direction='ltr';x.textAlign='left';x.font='11px "IBM Plex Sans Arabic",system-ui';x.fillStyle=col('--muted');x.strokeStyle=col('--line');
   for(let k=0;k<=4;k++){const v=lo+(hi-lo)*k/4,y=Y(v);x.beginPath();x.moveTo(p,y);x.lineTo(W,y);x.stroke();x.fillText(v.toFixed(1),2,y+4)}
   thr.forEach(t=>{x.strokeStyle=col(t.c);x.setLineDash([5,4]);x.beginPath();x.moveTo(p,Y(t.v));x.lineTo(W,Y(t.v));x.stroke();x.setLineDash([])});
   series.forEach(s=>{x.strokeStyle=col(s.c);x.lineWidth=1.6;x.beginPath();let m=false;s.data.forEach((v,i)=>{if(!isFinite(v)){m=false;return}m?x.lineTo(Xr(i),Y(v)):x.moveTo(Xr(i),Y(v));m=true});x.stroke();x.lineWidth=1});
@@ -144,24 +201,29 @@ function render(){
     ['هامش نقطة الندى °م',f(last.margin),isFinite(last.margin)?mc:''],
     ['نقطة ندى الماء °م',f(last.dew),''],['حِمل الكلورايد',f(last.cl_load),''],
     ['ماء الغسيل %',f(last.wash_pct),''],['pH ماء القمة',f(last.ovhd_water_ph),last.ovhd_water_ph<c.phlo?'warn':'']
-  ].map(([l,v,k])=>`<div class="kpi"><div class="l">${l}</div><div class="v ${k}">${v}</div></div>`).join('');
+  ].map(([l,v,k],i)=>`<div class="tile ${k} ${i?'':'hero'}"><div class="v">${v}</div><div class="l">${l}</div></div>`).join('');
   const thr=[{v:c.warn,c:'--warn'},{v:c.crit,c:'--crit'}];
-  if(preds){draw($('c1'),[{data:rows.map(r=>r.actual),c:'--s1'},{data:rows.map(r=>r.predicted),c:'--s2'}],thr);lg('lg1',[['الفعلي','--s1'],['المتوقع','--s2'],['تنبيه','--warn'],['حرج','--crit']])}
-  else{draw($('c1'),[{data:rows.map(r=>r.ovhd_water_iron),c:'--s1'}],thr);lg('lg1',[['الحديد','--s1'],['تنبيه','--warn'],['حرج','--crit']])}
-  draw($('c2'),[{data:rows.map(r=>r.margin),c:'--s1'}],[{v:c.margin,c:'--crit'}]);lg('lg2',[['الهامش','--s1'],['عتبة التكثّف المبكر','--crit']]);
+  if(preds){draw($('c1'),[{data:view().map(r=>r.actual),c:'--s1'},{data:view().map(r=>r.predicted),c:'--s2'}],thr);lg('lg1',[['الفعلي','--s1'],['المتوقع','--s2'],['تنبيه','--warn'],['حرج','--crit']])}
+  else{draw($('c1'),[{data:view().map(r=>r.ovhd_water_iron),c:'--s1'}],thr);lg('lg1',[['الحديد','--s1'],['تنبيه','--warn'],['حرج','--crit']])}
+  draw($('c2'),[{data:view().map(r=>r.margin),c:'--s1'}],[{v:c.margin,c:'--crit'}]);lg('lg2',[['الهامش','--s1'],['عتبة التكثّف المبكر','--crit']]);
   const cols=preds?[['timestamp','الزمن'],['actual','الفعلي'],['predicted','المتوقع'],['alarm','الإنذار']]:[['timestamp','الزمن'],['ovhd_water_iron','Fe'],['margin','الهامش'],['ovhd_temp','حرارة القمة'],['ovhd_water_ph','pH'],['cl_load','حِمل Cl']];
-  $('tbl').innerHTML='<table><tr>'+cols.map(c=>`<th>${c[1]}</th>`).join('')+'</tr>'+rows.slice(-50).reverse().map(r=>'<tr>'+cols.map(([k])=>`<td>${typeof r[k]==='number'?f(r[k]):(r[k]??'—')}</td>`).join('')+'</tr>').join('')+'</table>';
+  $('tbl').innerHTML='<table><tr>'+cols.map(c=>`<th>${c[1]}</th>`).join('')+'</tr>'+rows.slice(-200).reverse().map(r=>'<tr>'+cols.map(([k])=>`<td>${k==='alarm'&&r[k]?`<span class="badge ${{'طبيعي':'ok','تنبيه':'warn','حرج':'crit'}[r[k]]||''}">${r[k]}</span>`:typeof r[k]==='number'?f(r[k]):(r[k]??'—')}</td>`).join('')+'</tr>').join('')+'</table>';
 }
 function whatif(){
   const d=dewpoint(+$('w_s').value,+$('w_v').value,+$('w_p').value),m=+$('w_t').value-d,ok=m>=cfg().margin;
-  $('w_out').innerHTML=`نقطة الندى: <b>${d.toFixed(1)}°م</b> · الهامش: <b class="${ok?'ok':'crit'}">${m.toFixed(1)}°م</b> — ${ok?'آمن':'خطر تكثّف حمضي مبكر'}`;
+  $('w_out').innerHTML=`نقطة ندى الماء: <b>${d.toFixed(1)}°م</b> · الهامش: <b class="${ok?'ok':'crit'}">${m.toFixed(1)}°م</b> — ${ok?'آمن':'خطر تكثّف حمضي مبكر'}`;
 }
-$('file').onchange=e=>{const fl=e.target.files[0];if(!fl)return;fl.text().then(t=>{
+const openFile=fl=>{if(!fl)return;fl.text().then(t=>{
   if(fl.name.endsWith('.json')){const s=JSON.parse(t);$('status').innerHTML=`<b>summary.json</b> · أفضل نموذج: ${s.best_model} · MAE: ${(+s.metrics?.MAE||+s.metrics?.mae||0).toFixed?.(3)} · الأفق: ${s.horizon_h} ساعة · أهم الخصائص: ${Object.keys(s.top_features||{}).slice(0,5).join('، ')}`;return}
   const r=parseCSV(t);
   if('predicted' in r[0]){rows=r;preds=true;$('status').innerHTML=`<b>${fl.name}</b> · تنبؤات النموذج · ${r.length} صف`;render()}
   else load(ffill(r).map(enrich),fl.name);
 })};
+$('file').onchange=e=>openFile(e.target.files[0]);
+const dz=$('drop');dz.ondragover=e=>{e.preventDefault();dz.classList.add('over')};dz.ondragleave=()=>dz.classList.remove('over');
+dz.ondrop=e=>{e.preventDefault();dz.classList.remove('over');openFile(e.dataTransfer.files[0])};
+document.querySelectorAll('.nav-i').forEach(b=>b.onclick=()=>{document.querySelectorAll('.nav-i').forEach(x=>x.removeAttribute('aria-current'));b.setAttribute('aria-current','true');document.querySelectorAll('.view').forEach(v=>v.classList.toggle('on',v.id==='v-'+b.dataset.v));render()});
+document.querySelectorAll('#range button').forEach(b=>b.onclick=()=>{document.querySelectorAll('#range button').forEach(x=>x.removeAttribute('aria-pressed'));b.setAttribute('aria-pressed','true');days=+b.dataset.d;render()});
 $('demo').onclick=demo;
 $('theme').onclick=()=>{const h=document.documentElement,dk=h.dataset.theme?h.dataset.theme==='dark':matchMedia('(prefers-color-scheme:dark)').matches;h.dataset.theme=dk?'light':'dark';render()};
 document.querySelectorAll('input[type=number]').forEach(i=>i.oninput=()=>{whatif();render()});

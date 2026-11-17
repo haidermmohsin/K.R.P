@@ -3,6 +3,9 @@
 # مشروع مصفى كربلاء — مبنية على IONE-AA01-PFD-0010-001 (4 صفحات)
 # ----------------------------------------------------------------------------
 # `canonical` : الاسم الموحّد داخل الكود — لا تغيّره
+# تحديث 2026-11: الوسوم المربوطة بتقارير التشغيل اليومية الحقيقية (U1_*.xlsx)
+#   تحمل تعليقاً بوصفها. الباقية (مختبر، حقن كيميائي، جهد الديسولتر) غير
+#   موجودة في التقارير وما زالت مبدئية.
 # `dcs_tag`   : اسم الوسم في المؤرخ (PI/PHD). **القيم أدناه مبدئية**: أرقام
 #               المعدات مأخوذة من الـ PFD وهي صحيحة، أما أرقام حلقات القياس
 #               فمُولَّدة على نمط الوحدة وتحتاج استبدالاً من قائمة وسوم الـ DCS.
@@ -16,7 +19,7 @@ timestamp_column: timestamp
 tags:
   # ======================= تغذية الخام =======================
   - canonical: crude_feed_rate
-    dcs_tag: 01FI1001
+    dcs_tag: 01-FI-0001   # Crude from Storage Flow
     equipment: 01-P-001A/B
     unit: m3/h
     limits: [0, 1200]
@@ -53,7 +56,7 @@ tags:
   # قد لا يظهر في الملح النهائي حتى تتدهور الأخرى — وهذا ما يجعل مراقبة
   # كل مرحلة على حدة أهم من مراقبة الناتج النهائي فقط.
   - canonical: desalter1_temp
-    dcs_tag: 01TI1011
+    dcs_tag: 01-TI-0016   # CRD TO 01-V-001A/B FROM 01-E-005A/B
     equipment: 01-V-001A
     unit: degC
     limits: [80, 160]
@@ -61,7 +64,7 @@ tags:
     desc: حرارة الخام عند مدخل الديسولتر الأول
 
   - canonical: desalter1_dp
-    dcs_tag: 01PDI1012
+    dcs_tag: 01-PDI-0004   # DESAL WATER TO 01-V-001A — فرق ضغط صمام الخلط
     equipment: 01-V-001A
     unit: bar
     limits: [0, 3]
@@ -85,7 +88,7 @@ tags:
     desc: حرارة الخام عند مدخل الديسولتر الثاني
 
   - canonical: desalter2_dp
-    dcs_tag: 01PDI1022
+    dcs_tag: 01-PDI-0006   # CRD TO 01-V-001B — فرق ضغط صمام الخلط
     equipment: 01-V-001B
     unit: bar
     limits: [0, 3]
@@ -101,7 +104,7 @@ tags:
     desc: جهد الشبكة الكهربائية للديسولتر الثاني
 
   - canonical: wash_water_rate
-    dcs_tag: 01FI1030
+    dcs_tag: 01-FIC-0140   # WASH WATER TO 01-V-001A
     equipment: 01-P-013A/B
     unit: m3/h
     limits: [0, 120]
@@ -109,7 +112,7 @@ tags:
     desc: ماء الغسيل من مضخات ماء الديسولتر
 
   - canonical: wash_water_recycle_rate
-    dcs_tag: 01FI1031
+    dcs_tag: 01-FI-0008   # 01-P-014A/B DISCH DESAL WATER
     equipment: 01-P-014A/B
     unit: m3/h
     limits: [0, 120]
@@ -158,7 +161,7 @@ tags:
 
   # =================== الفرن والبرج الجوي ===================
   - canonical: furnace_coil_outlet_temp
-    dcs_tag: 01TI1101
+    dcs_tag: 01-TIC-0047   # CRD FROM 01-H-001
     equipment: 01-H-001
     unit: degC
     limits: [300, 400]
@@ -166,7 +169,7 @@ tags:
     desc: حرارة مخرج ملف فرن الخام (COT)
 
   - canonical: furnace_o2
-    dcs_tag: 01AI1105
+    dcs_tag: 01-AIC-0002   # 01-H-001 O2 mol%
     equipment: 01-H-001
     unit: vol%
     limits: [0, 12]
@@ -174,7 +177,7 @@ tags:
     desc: الأوكسجين الزائد في غازات مدخنة فرن الخام
 
   - canonical: atm_flash_zone_temp
-    dcs_tag: 01TI1201
+    dcs_tag: 01-TI-0058   # ATM TWR FLASH ZONE
     equipment: 01-T-001
     unit: degC
     limits: [300, 400]
@@ -182,15 +185,15 @@ tags:
     desc: حرارة منطقة التبخير الوميضي في البرج الجوي (48 صينية)
 
   - canonical: stripping_steam_rate
-    dcs_tag: 01FI1210
+    dcs_tag: 01-FIC-0020   # MPS TO 01-T-001 (المتوسط الفعلي ≈9080 kg/h)
     equipment: 01-T-001
     unit: kg/h
-    limits: [0, 8000]
+    limits: [0, 15000]
     source: dcs
     desc: بخار التعرية إلى قاع البرج الجوي
 
   - canonical: atm_reflux_rate
-    dcs_tag: 01FI1303
+    dcs_tag: 01-FIC-0034   # 01-P-002A/B DISCH RFLX
     equipment: 01-P-002A/B
     unit: m3/h
     limits: [0, 400]
@@ -205,7 +208,7 @@ tags:
   # ظروف 01-V-003 لا عند قمة البرج: نزوله نحو الصفر يعني تكثّفاً حمضياً
   # مبكراً داخل الحوض الساخن وهو الحدث الخطر الأول في هذه الوحدة.
   - canonical: atm_ovhd_temp
-    dcs_tag: 01TI1301
+    dcs_tag: 01-TI-0054   # ATM TWR OVHD TO 01-E-003A-D
     equipment: 01-T-001
     unit: degC
     limits: [120, 200]
@@ -213,7 +216,7 @@ tags:
     desc: حرارة بخار قمة البرج الجوي قبل 01-E-003 (تصميماً نحو 172°م)
 
   - canonical: atm_ovhd_pressure
-    dcs_tag: 01PI1302
+    dcs_tag: 01-PI-0020   # ATM TWR OVHD FROM 01-T-001 (kg/cm2g)
     equipment: 01-T-001
     unit: barg
     limits: [0, 3]
@@ -229,7 +232,7 @@ tags:
     desc: معدل بخار القمة الهيدروكربوني
 
   - canonical: hot_drum_temp
-    dcs_tag: 01TI1340
+    dcs_tag: 01-TI-0078   # ATM TWR OVHD FROM 01-V-003
     equipment: 01-V-003
     unit: degC
     limits: [100, 180]
@@ -237,7 +240,7 @@ tags:
     desc: "حرارة حوض الرجوع الساخن (تصميماً 138°م) — المتغيّر الحرج للتآكل"
 
   - canonical: hot_drum_pressure
-    dcs_tag: 01PI1341
+    dcs_tag: 01-PI-0028   # ATM TWR OVHD FROM 01-V-003 (kg/cm2g)
     equipment: 01-V-003
     unit: barg
     limits: [0, 3]
@@ -245,23 +248,23 @@ tags:
     desc: ضغط حوض الرجوع الساخن (تصميماً 1.2 kg/cm²g)
 
   - canonical: ovhd_air_cooler_outlet_temp
-    dcs_tag: 01TI1350
+    dcs_tag: 01-TI-0090   # ATM TWR OVHD FROM 01-E-020A-D (لا يوجد حسّاس مخرج 01-EA-004)
     equipment: 01-EA-004
     unit: degC
-    limits: [30, 120]
+    limits: [10, 120]
     source: dcs
     desc: حرارة مخرج المبرد الهوائي لقمة البرج الجوي
 
   - canonical: accumulator_temp
-    dcs_tag: 01TI1360
+    dcs_tag: 01-TI-0091   # 01-P-010A/B SUC — بديل لحرارة 01-V-005
     equipment: 01-V-005
     unit: degC
-    limits: [25, 90]
+    limits: [10, 90]
     source: dcs
     desc: حرارة حوض تجميع منتج القمة (تصميماً 38°م) — نقطة فصل الماء الحامض
 
   - canonical: accumulator_pressure
-    dcs_tag: 01PI1361
+    dcs_tag: 01-PIC-0044   # OVHD PROD VAPOUR FROM 01-V-005 (kg/cm2g)
     equipment: 01-V-005
     unit: barg
     limits: [0, 3]
@@ -336,7 +339,7 @@ tags:
 
   # ============== وحدة التقطير الفراغي — VDU ==============
   - canonical: vac_heater_cot
-    dcs_tag: 01TI2101
+    dcs_tag: 01-TI-0507-AVG   # متوسط الممرات A–H لـ 01-TI-0507 (عمود محسوب)
     equipment: 01-H-051
     unit: degC
     limits: [330, 430]
@@ -344,7 +347,7 @@ tags:
     desc: حرارة مخرج فرن الفراغ (تصميماً نحو 407°م)
 
   - canonical: velocity_steam_rate
-    dcs_tag: 01FI2102
+    dcs_tag: 01-FIC-0507   # MPS TO 01-H-051 for Velocity Steam
     equipment: 01-H-051
     unit: kg/h
     limits: [0, 6000]
@@ -352,7 +355,7 @@ tags:
     desc: بخار السرعة في ملفات فرن الفراغ — يقلّل زمن المكوث ويكبح التكسير
 
   - canonical: vac_transfer_line_temp
-    dcs_tag: 01TI2105
+    dcs_tag: 01-TI-0511   # AR FROM 01-H-051
     equipment: 01-T-051
     unit: degC
     limits: [330, 430]
@@ -360,7 +363,7 @@ tags:
     desc: حرارة خط النقل إلى برج الفراغ — منطقة تآكل الأحماض النفثينية
 
   - canonical: vac_flash_zone_temp
-    dcs_tag: 01TI2201
+    dcs_tag: 01-TI-0516   # 01-T-051 VAC OVFL — أقرب حسّاس لمنطقة التبخير
     equipment: 01-T-051
     unit: degC
     limits: [330, 430]
@@ -368,7 +371,7 @@ tags:
     desc: حرارة منطقة التبخير الوميضي في برج الفراغ (تصميماً نحو 394°م)
 
   - canonical: vac_tower_top_pressure
-    dcs_tag: 01PI2202
+    dcs_tag: 01-PI-0508   # 01-T-051 VAC OVFL (mmHg) — لا يوجد حسّاس قمة
     equipment: 01-T-051
     unit: mmHg
     limits: [5, 120]
@@ -376,7 +379,7 @@ tags:
     desc: ضغط قمة برج الفراغ
 
   - canonical: vac_residue_temp
-    dcs_tag: 01TI2210
+    dcs_tag: 01-TI-0060   # FROM 01-T-051 BTM
     equipment: 01-P-054A/B
     unit: degC
     limits: [150, 400]

@@ -5,7 +5,7 @@ project:
 
 data:
   tags_file: configs/tags.yaml
-  resample_freq: 1h          # معدّل التجميع الموحّد لكل السلاسل
+  resample_freq: 4h          # تقارير التشغيل اليومية = متوسطات كل 4 ساعات
   lab_max_staleness_h: 24    # أقصى مدة يُسمح فيها بسحب قراءة مختبرية للأمام
 
 cleaning:

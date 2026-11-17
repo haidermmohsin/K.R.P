@@ -110,7 +110,7 @@ def test_hot_drum_breach_flag_triggers_below_threshold(cfg):
 
 def test_target_is_shifted_into_the_future(cfg):
     """الهدف قيمة مستقبلية — وإلا فالنموذج يتنبأ بالحاضر."""
-    idx = pd.date_range("2025-01-01", periods=300, freq="1h")
+    idx = pd.date_range("2025-01-01", periods=300, freq=cfg["data"]["resample_freq"])
     rng = np.random.default_rng(0)
     target = cfg["model"]["target"]
     df = pd.DataFrame(

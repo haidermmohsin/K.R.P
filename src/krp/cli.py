@@ -1,6 +1,7 @@
 """واجهة سطر الأوامر لخط تحليل وحدة CDU/VDU.
 
     python -m krp.cli simulate --days 180 --out data/raw/unit01_sim.csv
+    python -m krp.cli merge    --input-dir data/raw/daily --out data/raw/merged.csv
     python -m krp.cli analyze  --input data/raw/unit01_sim.csv
 """
 
@@ -35,6 +36,44 @@ def cmd_simulate(args) -> None:
     out.parent.mkdir(parents=True, exist_ok=True)
     export.to_csv(out, index=False)
     print(f"✓ بيانات اصطناعية: {len(export):,} صف × {len(export.columns)} وسم → {out}")
+
+
+def cmd_merge(args) -> None:
+    """يدمج ملفات التصدير اليومية (CSV/Excel) في مجلد واحد إلى ملف واحد."""
+    cfg = load_config(args.config)
+    ts_col = cfg["_tag_map"].timestamp_column
+    src = _p(args.input_dir)
+    files = sorted(f for f in src.iterdir()
+                   if f.is_file() and f.suffix.lower() in {".csv", ".xlsx", ".xlsm", ".xls"}
+                   and not f.name.startswith(("~$", ".")))
+    if not files:
+        raise SystemExit(f"لا توجد ملفات CSV/Excel في {src}")
+
+    frames = []
+    for f in files:
+        df = pd.read_csv(f) if f.suffix.lower() == ".csv" else pd.read_excel(f)
+        df.columns = [str(c).strip() for c in df.columns]
+        if ts_col not in df.columns:
+            print(f"   ⚠ تخطي {f.name}: لا يوجد عمود الوقت '{ts_col}'")
+            continue
+        frames.append(df)
+        print(f"   + {f.name}: {len(df):,} صف")
+    if not frames:
+        raise SystemExit("لم يُقرأ أي ملف صالح.")
+
+    merged = pd.concat(frames, ignore_index=True, sort=False)
+    merged[ts_col] = pd.to_datetime(merged[ts_col], errors="coerce")
+    merged = (merged.dropna(subset=[ts_col])
+                    .drop_duplicates(subset=[ts_col], keep="last")
+                    .sort_values(ts_col))
+    out = _p(args.out)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    if out.suffix.lower() in {".xlsx", ".xlsm"}:
+        merged.to_excel(out, index=False)
+    else:
+        merged.to_csv(out, index=False)
+    print(f"✓ دُمج {len(frames)} ملف → {len(merged):,} صف"
+          f" ({merged[ts_col].min()} → {merged[ts_col].max()}) → {out}")
 
 
 def cmd_analyze(args) -> None:
@@ -114,6 +153,11 @@ def main(argv=None) -> None:
     s.add_argument("--seed", type=int, default=42)
     s.add_argument("--out", default="data/raw/unit01_sim.csv")
     s.set_defaults(func=cmd_simulate)
+
+    m = sub.add_parser("merge", help="دمج الملفات اليومية في ملف واحد")
+    m.add_argument("--input-dir", default="data/raw/daily")
+    m.add_argument("--out", default="data/raw/merged.csv")
+    m.set_defaults(func=cmd_merge)
 
     a = sub.add_parser("analyze", help="تشغيل خط التحليل الكامل")
     a.add_argument("--input", required=True)
